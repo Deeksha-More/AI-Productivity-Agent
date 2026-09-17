@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AI Productivity Agent</title>
 
     <style>
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -30,26 +32,35 @@
             color: #243746;
         }
 
+        button {
+            cursor: pointer;
+        }
+
         .app {
             display: flex;
             min-height: 100vh;
         }
 
-        /* SIDEBAR */
+        /* ================= SIDEBAR ================= */
 
         .sidebar {
             width: 250px;
             min-height: 100vh;
-            padding: 25px 18px;
 
-            background: rgba(255, 255, 255, 0.30);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            background: rgba(255, 255, 255, 0.88);
 
-            border-right: 1px solid rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
 
-            display: flex;
-            flex-direction: column;
+            padding: 25px 15px;
+
+            box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+
+            overflow-y: auto;
         }
 
         .logo {
@@ -58,109 +69,70 @@
         }
 
         .logo h1 {
-            font-size: 25px;
-            color: #203747;
+            font-size: 24px;
+            color: #29485c;
         }
 
         .logo p {
             font-size: 12px;
+            color: #71818c;
             margin-top: 5px;
-            color: #526773;
-        }
-
-        .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .menu button {
-            border: none;
-            padding: 13px 15px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.35);
-            color: #263f4d;
-            cursor: pointer;
-            text-align: left;
-            font-size: 14px;
-            transition: 0.25s;
-        }
-
-        .menu button:hover {
-            background: rgba(255, 255, 255, 0.65);
-            transform: translateX(3px);
-        }
-
-        .menu button.active {
-            background: rgba(255, 255, 255, 0.75);
-            font-weight: bold;
-        }
-
-        .sidebar-bottom {
-            margin-top: auto;
         }
 
         .user-box {
-            padding: 13px;
-            margin-bottom: 10px;
+            background: rgba(225, 237, 243, 0.8);
+            padding: 12px;
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.35);
-            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
         }
 
-        .user-box strong {
-            display: block;
-            margin-bottom: 4px;
+        .nav-btn {
+            width: 100%;
+            border: none;
+            background: transparent;
+
+            padding: 13px 15px;
+            margin: 4px 0;
+
+            border-radius: 10px;
+
+            text-align: left;
+
+            color: #3c5261;
+
+            font-size: 14px;
+
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: #dcebf1;
+            color: #19394b;
         }
 
         .logout-btn {
-            width: 100%;
-            border: none;
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            background: rgba(255, 220, 220, 0.65);
-            color: #8b3030;
-            font-weight: bold;
+            margin-top: 20px;
+            background: #f1dede;
+            color: #7c3030;
         }
 
         .logout-btn:hover {
-            background: rgba(255, 200, 200, 0.85);
+            background: #eacaca;
         }
 
-        /* MAIN */
+        /* ================= MAIN ================= */
 
         .main {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
+            margin-left: 250px;
+            width: calc(100% - 250px);
 
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
+            padding: 35px;
 
-        .topbar h2 {
-            font-size: 28px;
-            color: #203747;
+            min-height: 100vh;
         }
-
-        .topbar p {
-            margin-top: 5px;
-            color: #526773;
-        }
-
-        .date {
-            background: rgba(255,255,255,0.45);
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-size: 13px;
-        }
-
-        /* PAGE */
 
         .page {
             display: none;
@@ -170,328 +142,353 @@
             display: block;
         }
 
-        /* CARDS */
+        .page-title {
+            margin-bottom: 25px;
+        }
+
+        .page-title h2 {
+            font-size: 30px;
+            color: #29485c;
+        }
+
+        .page-title p {
+            margin-top: 7px;
+            color: #647681;
+        }
+
+        /* ================= CARDS ================= */
 
         .cards {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(200px, 1fr));
+
+            gap: 20px;
+
             margin-bottom: 25px;
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(255,255,255,0.88);
 
-            border: 1px solid rgba(255,255,255,0.5);
-            border-radius: 18px;
+            backdrop-filter: blur(10px);
+
+            border-radius: 16px;
+
             padding: 22px;
 
-            box-shadow: 0 10px 30px rgba(60, 80, 90, 0.10);
+            box-shadow:
+                0 8px 25px rgba(0,0,0,0.08);
         }
 
-        .card h3 {
-            font-size: 15px;
+        .stat-card h3 {
+            font-size: 14px;
+            color: #74838d;
             margin-bottom: 10px;
-            color: #526773;
         }
 
-        .big-number {
-            font-size: 32px;
+        .stat-card .number {
+            font-size: 30px;
             font-weight: bold;
-            color: #203747;
+            color: #29485c;
         }
 
-        /* QUICK ACTIONS */
+        /* ================= CONTENT ================= */
 
-        .quick-actions {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
+        .content-card {
+            background: rgba(255,255,255,0.90);
 
-        .quick-actions button {
-            border: none;
-            padding: 12px 18px;
-            border-radius: 12px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.55);
-            color: #243746;
-            font-weight: bold;
-        }
+            backdrop-filter: blur(10px);
 
-        .quick-actions button:hover {
-            background: rgba(255,255,255,0.8);
-        }
+            border-radius: 16px;
 
-        /* FORM */
-
-        .form-card {
-            max-width: 750px;
-            background: rgba(255,255,255,0.48);
-            backdrop-filter: blur(15px);
             padding: 25px;
-            border-radius: 18px;
-            border: 1px solid rgba(255,255,255,0.5);
+
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 8px 25px rgba(0,0,0,0.08);
         }
+
+        .content-card h3 {
+            margin-bottom: 18px;
+            color: #29485c;
+        }
+
+        /* ================= FORMS ================= */
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 17px;
         }
 
         .form-group label {
             display: block;
+
             margin-bottom: 7px;
-            font-weight: bold;
+
             font-size: 14px;
+
+            color: #526671;
         }
 
         input,
         textarea,
         select {
             width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(70,90,100,0.2);
-            background: rgba(255,255,255,0.65);
+
+            padding: 12px 14px;
+
+            border: 1px solid #ccd8de;
+
+            border-radius: 9px;
+
+            background: rgba(255,255,255,0.9);
+
             outline: none;
-            color: #243746;
+
+            font-size: 14px;
         }
 
         textarea {
+            min-height: 120px;
             resize: vertical;
-            min-height: 100px;
         }
 
         input:focus,
         textarea:focus,
         select:focus {
-            border-color: #607d8b;
+            border-color: #739bad;
         }
 
         .primary-btn {
             border: none;
-            padding: 13px 20px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.75);
-            cursor: pointer;
-            font-weight: bold;
-            color: #203747;
+
+            background: #52798b;
+
+            color: white;
+
+            padding: 12px 20px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
         }
 
         .primary-btn:hover {
-            background: rgba(255,255,255,0.95);
+            background: #416879;
         }
 
-        .voice-btn {
-            margin-top: 8px;
+        .secondary-btn {
             border: none;
-            padding: 10px 14px;
-            border-radius: 10px;
-            cursor: pointer;
-            background: rgba(220,235,240,0.75);
-        }
 
-        /* TASKS */
+            background: #dcebf1;
 
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
+            color: #29485c;
 
-        .task-item {
-            background: rgba(255,255,255,0.48);
-            backdrop-filter: blur(15px);
-            padding: 18px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
+            padding: 10px 16px;
 
-        .task-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .task-name {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .task-details {
-            margin-top: 8px;
-            font-size: 13px;
-            color: #526773;
-        }
-
-        .task-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .task-actions button {
-            border: none;
-            padding: 8px 11px;
-            border-radius: 9px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.65);
-            font-size: 12px;
-        }
-
-        .task-actions button:hover {
-            background: rgba(255,255,255,0.9);
-        }
-
-        .priority {
-            padding: 5px 9px;
             border-radius: 8px;
-            font-size: 11px;
-            font-weight: bold;
-            background: rgba(255,255,255,0.65);
-        }
-
-        .countdown {
-            margin-top: 8px;
-            font-weight: bold;
-            font-size: 13px;
-        }
-
-        /* PLAN / INSIGHTS / HISTORY */
-
-        .content-card {
-            background: rgba(255,255,255,0.48);
-            backdrop-filter: blur(15px);
-            padding: 25px;
-            border-radius: 18px;
-            border: 1px solid rgba(255,255,255,0.5);
-            margin-bottom: 20px;
-        }
-
-        .content-card h3 {
-            margin-bottom: 15px;
-        }
-
-        .content-text {
-            white-space: pre-wrap;
-            line-height: 1.6;
-            color: #405562;
-        }
-
-        .history-item {
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.4);
-        }
-
-        .history-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
         }
 
         .danger-btn {
             border: none;
-            padding: 10px 15px;
-            border-radius: 10px;
-            background: rgba(255,210,210,0.7);
-            color: #8b3030;
-            cursor: pointer;
+
+            background: #f0d7d7;
+
+            color: #853636;
+
+            padding: 9px 13px;
+
+            border-radius: 8px;
+        }
+
+        /* ================= TASK ================= */
+
+        .task-item {
+            background: rgba(247,250,251,0.95);
+
+            border: 1px solid #dbe5e9;
+
+            border-radius: 13px;
+
+            padding: 18px;
+
+            margin-bottom: 14px;
+        }
+
+        .task-top {
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 15px;
+        }
+
+        .task-name {
+            font-size: 17px;
+            font-weight: bold;
+
+            color: #29485c;
+        }
+
+        .task-details {
+            margin-top: 7px;
+
+            font-size: 13px;
+
+            color: #71818c;
+        }
+
+        .priority {
+            padding: 6px 10px;
+
+            background: #e8eef1;
+
+            border-radius: 8px;
+
+            font-size: 12px;
+
             font-weight: bold;
         }
 
-        .danger-btn:hover {
-            background: rgba(255,190,190,0.9);
+        .countdown {
+            margin-top: 12px;
+
+            font-size: 13px;
+
+            color: #607987;
+
+            font-weight: bold;
         }
 
-        .message {
+        .task-actions {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+
             margin-top: 15px;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.45);
-            display: none;
         }
 
-        /* AI */
+        .task-actions button {
+            border: none;
 
-        .ai-card {
-            background: rgba(255,255,255,0.48);
-            backdrop-filter: blur(15px);
-            padding: 25px;
-            border-radius: 18px;
-            border: 1px solid rgba(255,255,255,0.5);
+            background: #e2edf1;
+
+            color: #385563;
+
+            padding: 8px 11px;
+
+            border-radius: 7px;
+
+            font-size: 12px;
+        }
+
+        .task-actions button:hover {
+            background: #cedfe6;
+        }
+
+        /* ================= AI ================= */
+
+        .ai-box {
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(225,237,243,0.9),
+                    rgba(246,240,231,0.9)
+                );
+
+            border-radius: 14px;
+
+            padding: 20px;
+
             margin-bottom: 20px;
         }
 
-        .ai-card h2 {
-            margin-bottom: 8px;
-        }
-
-        .ai-card p {
-            color: #526773;
-            margin-bottom: 18px;
-        }
-
         .ai-result {
-            margin-top: 18px;
-            padding: 18px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.50);
+            margin-top: 15px;
+
+            background: rgba(255,255,255,0.8);
+
+            border-radius: 10px;
+
+            padding: 15px;
+
             white-space: pre-wrap;
+
             line-height: 1.6;
-            min-height: 60px;
+
+            min-height: 50px;
         }
 
-        .ai-button {
-            border: none;
-            padding: 13px 20px;
+        /* ================= HISTORY ================= */
+
+        .history-item {
+            background: #f7fafb;
+
+            border: 1px solid #dce6ea;
+
             border-radius: 12px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.78);
-            color: #203747;
-            font-weight: bold;
+
+            padding: 17px;
+
+            margin-bottom: 12px;
         }
 
-        .ai-button:hover {
-            background: rgba(255,255,255,0.95);
+        .history-actions {
+            margin-top: 12px;
         }
 
-        /* RESPONSIVE */
+        /* ================= NEXT TASK ================= */
 
-        @media (max-width: 900px) {
+        .next-task {
+            font-size: 15px;
+
+            line-height: 1.6;
+
+            color: #415966;
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media(max-width: 800px) {
+
             .sidebar {
                 width: 210px;
             }
 
-            .cards {
-                grid-template-columns: 1fr;
+            .main {
+                margin-left: 210px;
+
+                width: calc(100% - 210px);
+
+                padding: 20px;
             }
         }
 
-        @media (max-width: 700px) {
-            .app {
-                flex-direction: column;
-            }
+        @media(max-width: 600px) {
 
             .sidebar {
+                position: relative;
+
                 width: 100%;
+
                 min-height: auto;
             }
 
-            .main {
-                padding: 18px;
+            .app {
+                display: block;
             }
 
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+            .main {
+                margin-left: 0;
+
+                width: 100%;
             }
         }
+
     </style>
 </head>
 
@@ -499,154 +496,224 @@
 
 <div class="app">
 
-    <!-- SIDEBAR -->
+    <!-- ================= SIDEBAR ================= -->
 
     <aside class="sidebar">
 
         <div class="logo">
-            <h1>🤖 AI Agent</h1>
-            <p>Smart Productivity Assistant</p>
-        </div>
 
-        <div class="menu">
+            <h1>🤖 AI Productivity</h1>
 
-            <button class="active" onclick="showPage('dashboard', this)">
-                🏠 Dashboard
-            </button>
-
-            <button onclick="showPage('add-task', this)">
-                ➕ Add Task
-            </button>
-
-            <button onclick="showPage('my-tasks', this)">
-                📋 My Tasks
-            </button>
-
-            <button onclick="showPage('daily-plan', this)">
-                🤖 AI Daily Plan
-            </button>
-
-            <button onclick="showPage('ai-assistant', this)">
-                🧠 AI Assistant
-            </button>
-
-            <button onclick="showPage('insights', this)">
-                📊 Productivity Insights
-            </button>
-
-            <button onclick="showPage('history', this)">
-                🕘 History
-            </button>
+            <p>Smart Personal Assistant</p>
 
         </div>
 
-        <div class="sidebar-bottom">
+        <div class="user-box">
 
-            <div class="user-box">
-                <strong>👤 Logged in as</strong>
-                <span id="sidebarUser">Loading...</span>
-            </div>
+            👤
 
-            <button class="logout-btn" onclick="logout()">
-                🚪 Logout
-            </button>
+            <span id="loggedUser">
+                Loading...
+            </span>
 
         </div>
+
+        <button
+            class="nav-btn active"
+            onclick="showPage('dashboard', this)"
+        >
+            🏠 Dashboard
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="showPage('addTask', this)"
+        >
+            ➕ Add Task
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="showPage('tasks', this)"
+        >
+            📋 My Tasks
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="showPage('dailyPlan', this)"
+        >
+            📅 AI Daily Plan
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="showPage('assistant', this)"
+        >
+            🧠 AI Assistant
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="showPage('insights', this)"
+        >
+            📊 Productivity Insights
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="showPage('history', this)"
+        >
+            🕒 History
+        </button>
+
+        <button
+            class="nav-btn logout-btn"
+            onclick="logout()"
+        >
+            🚪 Logout
+        </button>
 
     </aside>
 
-
-    <!-- MAIN -->
+    <!-- ================= MAIN ================= -->
 
     <main class="main">
 
-        <div class="topbar">
+        <!-- ================= DASHBOARD ================= -->
 
-            <div>
-                <h2 id="welcomeTitle">Welcome!</h2>
-                <p>Your personal AI productivity assistant</p>
+        <section
+            id="dashboard"
+            class="page active"
+        >
+
+            <div class="page-title">
+
+                <h2>Welcome Back 👋</h2>
+
+                <p>
+                    Manage your tasks with the help of AI.
+                </p>
+
             </div>
-
-            <div class="date" id="currentDate"></div>
-
-        </div>
-
-
-        <!-- DASHBOARD -->
-
-        <section id="dashboard" class="page active">
 
             <div class="cards">
 
-                <div class="card">
-                    <h3>📋 Total Tasks</h3>
-                    <div class="big-number" id="totalTasks">0</div>
+                <div class="card stat-card">
+
+                    <h3>Total Tasks</h3>
+
+                    <div
+                        class="number"
+                        id="totalTasks"
+                    >
+                        0
+                    </div>
+
                 </div>
 
-                <div class="card">
-                    <h3>⏳ Pending Tasks</h3>
-                    <div class="big-number" id="pendingTasks">0</div>
+                <div class="card stat-card">
+
+                    <h3>Completed</h3>
+
+                    <div
+                        class="number"
+                        id="completedTasks"
+                    >
+                        0
+                    </div>
+
                 </div>
 
-                <div class="card">
-                    <h3>✅ Completed Tasks</h3>
-                    <div class="big-number" id="completedTasks">0</div>
+                <div class="card stat-card">
+
+                    <h3>Pending</h3>
+
+                    <div
+                        class="number"
+                        id="pendingTasks"
+                    >
+                        0
+                    </div>
+
                 </div>
 
             </div>
 
+            <div class="content-card">
 
-            <div class="quick-actions">
+                <h3>📌 Next Task</h3>
 
-                <button onclick="showPage('add-task')">
+                <div
+                    id="nextTask"
+                    class="next-task"
+                >
+                    Loading...
+                </div>
+
+            </div>
+
+            <div class="content-card">
+
+                <h3>⚡ Quick Actions</h3>
+
+                <button
+                    class="primary-btn"
+                    onclick="showPageById('addTask')"
+                >
                     ➕ Add Task
                 </button>
 
             </div>
 
-
-            <div class="content-card">
-
-                <h3>🎯 Next Task</h3>
-
-                <div id="nextTask">
-                    No upcoming tasks.
-                </div>
-
-            </div>
-
         </section>
 
+        <!-- ================= ADD TASK ================= -->
 
-        <!-- ADD TASK -->
+        <section
+            id="addTask"
+            class="page"
+        >
 
-        <section id="add-task" class="page">
-
-            <div class="form-card">
+            <div class="page-title">
 
                 <h2>➕ Add New Task</h2>
 
-                <br>
+                <p>
+                    Create a task and set its deadline.
+                </p>
+
+            </div>
+
+            <div class="content-card">
 
                 <div class="form-group">
 
-                    <label>Task</label>
+                    <label>
+                        Task
+                    </label>
 
                     <textarea
                         id="taskInput"
-                        placeholder="Example: Prepare presentation for tomorrow"
+                        placeholder="Example: Complete project presentation"
                     ></textarea>
-
-                    <button class="voice-btn" onclick="startVoiceInput()">
-                        🎤 Speak Task
-                    </button>
 
                 </div>
 
+                <button
+                    class="secondary-btn"
+                    onclick="startVoiceInput()"
+                >
+                    🎤 Speak Task
+                </button>
+
+                <br><br>
 
                 <div class="form-group">
 
-                    <label>Deadline</label>
+                    <label>
+                        Deadline
+                    </label>
 
                     <input
                         type="datetime-local"
@@ -655,62 +722,69 @@
 
                 </div>
 
-
                 <div class="form-group">
 
-                    <label>Priority</label>
+                    <label>
+                        Priority
+                    </label>
 
                     <select id="priorityInput">
 
                         <option value="HIGH">
-                            🔴 HIGH
+                            HIGH
                         </option>
 
-                        <option value="MEDIUM" selected>
-                            🟡 MEDIUM
+                        <option
+                            value="MEDIUM"
+                            selected
+                        >
+                            MEDIUM
                         </option>
 
                         <option value="LOW">
-                            🟢 LOW
+                            LOW
                         </option>
 
                     </select>
 
                 </div>
 
-
                 <button
                     class="primary-btn"
                     onclick="addTask()"
                 >
-                    🤖 Add Task
+                    💾 Save Task
                 </button>
 
-
-                <div
-                    class="message"
-                    id="taskMessage"
-                ></div>
+                <p
+                    id="addTaskMessage"
+                    style="margin-top:15px;"
+                ></p>
 
             </div>
 
         </section>
 
+        <!-- ================= MY TASKS ================= -->
 
-        <!-- MY TASKS -->
+        <section
+            id="tasks"
+            class="page"
+        >
 
-        <section id="my-tasks" class="page">
-
-            <div class="content-card">
+            <div class="page-title">
 
                 <h2>📋 My Tasks</h2>
 
-                <br>
+                <p>
+                    View and manage all your tasks.
+                </p>
 
-                <div
-                    id="taskList"
-                    class="task-list"
-                >
+            </div>
+
+            <div class="content-card">
+
+                <div id="taskList">
                     Loading tasks...
                 </div>
 
@@ -718,155 +792,179 @@
 
         </section>
 
+        <!-- ================= DAILY PLAN ================= -->
 
-        <!-- AI DAILY PLAN -->
+        <section
+            id="dailyPlan"
+            class="page"
+        >
 
-        <section id="daily-plan" class="page">
+            <div class="page-title">
 
-            <div class="ai-card">
-
-                <h2>🤖 AI Daily Plan</h2>
+                <h2>📅 AI Daily Planner</h2>
 
                 <p>
-                    Gemini will analyze your pending tasks,
-                    deadlines and priorities to create a daily plan.
+                    Let Gemini organize your day.
                 </p>
 
+            </div>
+
+            <div class="content-card">
+
                 <button
-                    class="ai-button"
+                    class="primary-btn"
                     onclick="generateDailyPlan()"
                 >
-                    ✨ Generate AI Plan
+                    🤖 Generate Daily Plan
                 </button>
 
                 <div
                     id="dailyPlanResult"
                     class="ai-result"
                 >
-                    Click "Generate AI Plan" to ask Gemini to organize your day.
+                    Your AI-generated plan will appear here.
                 </div>
 
             </div>
 
         </section>
 
+        <!-- ================= AI ASSISTANT ================= -->
 
-        <!-- AI ASSISTANT -->
+        <section
+            id="assistant"
+            class="page"
+        >
 
-        <section id="ai-assistant" class="page">
+            <div class="page-title">
 
-            <div class="ai-card">
-
-                <h2>🧠 AI Task Assistant</h2>
+                <h2>🧠 AI Assistant</h2>
 
                 <p>
-                    Describe any task and Gemini will analyze it,
-                    suggest a priority and give you a practical action.
+                    Use Gemini to analyze tasks and improve productivity.
                 </p>
 
-                <textarea
-                    id="aiTaskInput"
-                    placeholder="Example: I have to prepare my college presentation tomorrow and I haven't started yet."
-                ></textarea>
+            </div>
 
-                <br><br>
+            <div class="content-card">
+
+                <h3>
+                    🤖 AI Task Analyzer
+                </h3>
+
+                <div class="form-group">
+
+                    <textarea
+                        id="aiTaskInput"
+                        placeholder="Example: I need to finish my project before Friday."
+                    ></textarea>
+
+                </div>
 
                 <button
-                    class="ai-button"
+                    class="primary-btn"
                     onclick="analyzeTaskWithAI()"
                 >
-                    🤖 Analyze with Gemini
+                    🔍 Analyze Task
                 </button>
 
                 <div
                     id="aiTaskResult"
                     class="ai-result"
                 >
-                    Enter a task and click "Analyze with Gemini".
+                    AI analysis will appear here.
                 </div>
 
             </div>
 
+            <div class="content-card">
 
-            <div class="ai-card">
-
-                <h2>💡 AI Productivity Coach</h2>
-
-                <p>
-                    Gemini will look at your current tasks and give
-                    you a short productivity recommendation.
-                </p>
+                <h3>
+                    🧠 AI Productivity Coach
+                </h3>
 
                 <button
-                    class="ai-button"
+                    class="primary-btn"
                     onclick="askAICoach()"
                 >
-                    🧠 Ask AI Coach
+                    💡 Ask AI Coach
                 </button>
 
                 <div
                     id="aiCoachResult"
                     class="ai-result"
                 >
-                    Click "Ask AI Coach" to get your recommendation.
+                    Your productivity advice will appear here.
                 </div>
 
             </div>
 
         </section>
 
+        <!-- ================= INSIGHTS ================= -->
 
-        <!-- INSIGHTS -->
+        <section
+            id="insights"
+            class="page"
+        >
 
-        <section id="insights" class="page">
-
-            <div class="content-card">
+            <div class="page-title">
 
                 <h2>📊 Productivity Insights</h2>
 
-                <br>
+                <p>
+                    Understand your productivity patterns.
+                </p>
+
+            </div>
+
+            <div class="content-card">
 
                 <button
                     class="primary-btn"
                     onclick="loadInsights()"
                 >
-                    🔄 Refresh Insights
+                    📊 Analyze Productivity
                 </button>
-
-                <br><br>
 
                 <div
                     id="insightsResult"
-                    class="content-text"
+                    class="ai-result"
                 >
-                    Click refresh to view your productivity insights.
+                    Productivity insights will appear here.
                 </div>
 
             </div>
 
         </section>
 
+        <!-- ================= HISTORY ================= -->
 
-        <!-- HISTORY -->
+        <section
+            id="history"
+            class="page"
+        >
 
-        <section id="history" class="page">
+            <div class="page-title">
+
+                <h2>🕒 Task History</h2>
+
+                <p>
+                    View completed and deleted task activity.
+                </p>
+
+            </div>
 
             <div class="content-card">
 
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button
+                    class="danger-btn"
+                    onclick="clearAllTasks()"
+                >
+                    🗑️ Clear All Tasks
+                </button>
 
-                    <h2>🕘 Task History</h2>
-
-                    <button
-                        class="danger-btn"
-                        onclick="clearAllTasks()"
-                    >
-                        🗑️ Clear All Tasks
-                    </button>
-
-                </div>
-
-                <br>
+                <br><br>
 
                 <div id="historyList">
                     Loading history...
@@ -880,1419 +978,1751 @@
 
 </div>
 
-
 <script>
 
-const API_URL = "http://127.0.0.1:5000";
+    /* =====================================================
+       RENDER BACKEND
+    ===================================================== */
 
-let currentUser = null;
-let allTasks = [];
+    const API_URL =
+        "https://ai-productivity-agent.onrender.com";
 
 
-// =====================================================
-// API HELPER
-// =====================================================
+    /* =====================================================
+       GLOBAL DATA
+    ===================================================== */
 
-async function apiFetch(url, options = {}) {
+    let allTasks = [];
 
-    options.credentials = "include";
 
-    if (options.body && !options.headers) {
+    /* =====================================================
+       API FETCH
+    ===================================================== */
 
-        options.headers = {
-            "Content-Type": "application/json"
-        };
+    async function apiFetch(url, options = {}) {
 
+        options.credentials = "include";
+
+        try {
+
+            const response = await fetch(
+                API_URL + url,
+                options
+            );
+
+            if (response.status === 401) {
+
+                window.location.href = "auth.html";
+
+                return null;
+            }
+
+            return response;
+
+        } catch (error) {
+
+            console.error(
+                "Backend connection error:",
+                error
+            );
+
+            alert(
+                "Unable to connect to the backend."
+            );
+
+            return null;
+        }
     }
 
-    const response = await fetch(
-        API_URL + url,
-        options
-    );
 
-    if (response.status === 401) {
+    /* =====================================================
+       PAGE NAVIGATION
+    ===================================================== */
 
-        window.location.href = "auth.html";
+    function showPage(pageId, button) {
 
-        return null;
-    }
+        document
+            .querySelectorAll(".page")
+            .forEach(page => {
 
-    return response;
-}
+                page.classList.remove("active");
+
+            });
 
 
-// =====================================================
-// CHECK LOGIN
-// =====================================================
+        const page =
+            document.getElementById(pageId);
 
-async function checkLogin() {
 
-    try {
+        if (page) {
 
-        const response = await apiFetch("/current-user");
+            page.classList.add("active");
 
-        if (!response) return;
-
-        const data = await response.json();
-
-        if (!data.logged_in) {
-
-            window.location.href = "auth.html";
-
-            return;
         }
 
-        currentUser = data.user;
 
-        document.getElementById("welcomeTitle").textContent =
-            `Welcome, ${currentUser.name}! 👋`;
+        document
+            .querySelectorAll(".nav-btn")
+            .forEach(btn => {
 
-        document.getElementById("sidebarUser").textContent =
-            currentUser.name;
+                btn.classList.remove("active");
 
-        loadDashboard();
+            });
 
-    } catch (error) {
 
-        console.error(error);
+        if (button) {
 
-        alert("Unable to connect to backend.");
+            button.classList.add("active");
 
-    }
-}
+        }
 
 
-// =====================================================
-// LOGOUT
-// =====================================================
-
-async function logout() {
-
-    try {
-
-        await apiFetch("/logout", {
-            method: "POST"
-        });
-
-        window.location.href = "auth.html";
-
-    } catch (error) {
-
-        console.error(error);
-
-        window.location.href = "auth.html";
-    }
-}
-
-
-// =====================================================
-// PAGE NAVIGATION
-// =====================================================
-
-function showPage(pageId, button = null) {
-
-    document.querySelectorAll(".page").forEach(page => {
-
-        page.classList.remove("active");
-
-    });
-
-    document.getElementById(pageId).classList.add("active");
-
-
-    document.querySelectorAll(".menu button").forEach(btn => {
-
-        btn.classList.remove("active");
-
-    });
-
-    if (button) {
-
-        button.classList.add("active");
-
-    }
-
-
-    if (pageId === "dashboard") {
-
-        loadDashboard();
-
-    }
-
-    if (pageId === "my-tasks") {
-
-        loadTasks();
-
-    }
-
-    if (pageId === "history") {
-
-        loadHistory();
-
-    }
-
-    if (pageId === "insights") {
-
-        loadInsights();
-
-    }
-
-}
-
-
-// =====================================================
-// DATE
-// =====================================================
-
-function updateDate() {
-
-    const now = new Date();
-
-    document.getElementById("currentDate").textContent =
-        now.toLocaleDateString(
-            "en-IN",
-            {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric"
-            }
-        );
-}
-
-
-// =====================================================
-// ADD TASK
-// =====================================================
-
-async function addTask() {
-
-    const task =
-        document.getElementById("taskInput").value.trim();
-
-    const deadline =
-        document.getElementById("deadlineInput").value;
-
-    const priority =
-        document.getElementById("priorityInput").value;
-
-
-    if (!task) {
-
-        showMessage(
-            "taskMessage",
-            "Please enter a task."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/add-task",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        task: task,
-                        deadline: deadline,
-                        priority: priority
-                    })
-                }
-            );
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            showMessage(
-                "taskMessage",
-                "✅ Task added successfully!"
-            );
-
-            document.getElementById("taskInput").value = "";
-            document.getElementById("deadlineInput").value = "";
-            document.getElementById("priorityInput").value = "MEDIUM";
+        if (pageId === "dashboard") {
 
             loadDashboard();
 
-        } else {
+        }
 
-            showMessage(
-                "taskMessage",
-                data.message || "Unable to add task."
-            );
+
+        if (pageId === "tasks") {
+
+            loadTasks();
 
         }
 
-    } catch (error) {
 
-        console.error(error);
+        if (pageId === "history") {
 
-        showMessage(
-            "taskMessage",
-            "❌ Backend connection error."
+            loadHistory();
+
+        }
+
+
+        if (pageId === "insights") {
+
+            loadInsights();
+
+        }
+
+    }
+
+
+    function showPageById(pageId) {
+
+        const button =
+            Array.from(
+                document.querySelectorAll(".nav-btn")
+            ).find(
+                btn =>
+                    btn.getAttribute("onclick")
+                        ?.includes("'" + pageId + "'")
+            );
+
+
+        showPage(
+            pageId,
+            button
         );
-    }
-}
 
-
-// =====================================================
-// LOAD TASKS
-// =====================================================
-
-async function loadTasks() {
-
-    try {
-
-        const response =
-            await apiFetch("/tasks");
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-        allTasks =
-            data.tasks || [];
-
-        renderTasks();
-
-    } catch (error) {
-
-        console.error(error);
-
-        document.getElementById("taskList").innerHTML =
-            "❌ Unable to load tasks.";
-    }
-}
-
-
-// =====================================================
-// RENDER TASKS
-// =====================================================
-
-function renderTasks() {
-
-    const container =
-        document.getElementById("taskList");
-
-    if (allTasks.length === 0) {
-
-        container.innerHTML =
-            "<p>No tasks available.</p>";
-
-        return;
     }
 
 
-    container.innerHTML = "";
+    /* =====================================================
+       LOGIN CHECK
+    ===================================================== */
+
+    async function checkLogin() {
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/current-user"
+                );
 
 
-    allTasks.forEach(task => {
+            if (!response) {
 
-        const item =
-            document.createElement("div");
+                return;
 
-        item.className =
-            "task-item";
-
-
-        const deadlineText =
-            task.deadline
-                ? formatDate(task.deadline)
-                : "No deadline";
-
-
-        const snoozeText =
-            task.snooze_until
-                ? `<br>Snoozed until: ${formatDate(task.snooze_until)}`
-                : "";
-
-
-        item.innerHTML = `
-
-            <div class="task-top">
-
-                <div>
-
-                    <div class="task-name">
-                        ${escapeHtml(task.task)}
-                    </div>
-
-                    <div class="task-details">
-                        📅 ${deadlineText}
-                        ${snoozeText}
-                    </div>
-
-                </div>
-
-                <div class="priority">
-                    ${task.priority || "MEDIUM"}
-                </div>
-
-            </div>
-
-            ${
-                task.deadline
-                ?
-                `<div
-                    class="countdown"
-                    data-deadline="${task.deadline}"
-                >
-                    ⏳ Calculating...
-                </div>`
-                :
-                ""
             }
 
-            <div class="task-actions">
 
-                <button onclick="completeTask(${task.id})">
-                    ✅ Complete
-                </button>
-
-                <button onclick="editTask(${task.id})">
-                    ✏️ Edit
-                </button>
-
-                <button onclick="deleteTask(${task.id})">
-                    🗑️ Delete
-                </button>
-
-                <button onclick="snoozeTask(${task.id}, 10)">
-                    😴 10m
-                </button>
-
-                <button onclick="snoozeTask(${task.id}, 30)">
-                    😴 30m
-                </button>
-
-                <button onclick="snoozeTask(${task.id}, 60)">
-                    😴 1h
-                </button>
-
-            </div>
-        `;
+            const data =
+                await response.json();
 
 
-        container.appendChild(item);
+            /*
+             * IMPORTANT:
+             * Backend returns logged_in,
+             * not success.
+             */
 
-    });
+            if (
+                data.logged_in === true &&
+                data.user
+            ) {
+
+                document.getElementById(
+                    "loggedUser"
+                ).textContent =
+                    data.user;
 
 
-    updateCountdowns();
-}
+                await loadDashboard();
+
+            }
+
+            else {
+
+                window.location.href =
+                    "auth.html";
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Login check error:",
+                error
+            );
+
+            document.getElementById(
+                "loggedUser"
+            ).textContent =
+                "Connection Error";
+
+        }
+
+    }
 
 
-// =====================================================
-// COMPLETE TASK
-// =====================================================
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
 
-async function completeTask(id) {
+    async function logout() {
 
-    try {
+        try {
 
-        const response =
             await apiFetch(
-                `/complete-task/${id}`,
+                "/logout",
                 {
                     method: "POST"
                 }
             );
 
-        if (!response) return;
+        }
 
-        await response.json();
+        finally {
 
-        loadTasks();
-        loadDashboard();
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-}
-
-
-// =====================================================
-// DELETE TASK
-// =====================================================
-
-async function deleteTask(id) {
-
-    if (!confirm("Delete this task?")) return;
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                `/delete-task/${id}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-        if (!response) return;
-
-        await response.json();
-
-        loadTasks();
-        loadDashboard();
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-}
-
-
-// =====================================================
-// EDIT TASK
-// =====================================================
-
-async function editTask(id) {
-
-    const task =
-        allTasks.find(item => item.id === id);
-
-    if (!task) return;
-
-
-    const newTask =
-        prompt(
-            "Edit task:",
-            task.task
-        );
-
-    if (newTask === null) return;
-
-
-    const newDeadline =
-        prompt(
-            "Edit deadline (YYYY-MM-DDTHH:MM):",
-            task.deadline || ""
-        );
-
-    if (newDeadline === null) return;
-
-
-    const newPriority =
-        prompt(
-            "Edit priority (HIGH / MEDIUM / LOW):",
-            task.priority || "MEDIUM"
-        );
-
-    if (newPriority === null) return;
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                `/edit-task/${id}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-
-                        task: newTask,
-
-                        deadline: newDeadline,
-
-                        priority:
-                            newPriority.toUpperCase()
-
-                    })
-                }
-            );
-
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-        if (data.success) {
-
-            loadTasks();
-            loadDashboard();
-
-        } else {
-
-            alert(
-                data.message ||
-                "Unable to edit task."
-            );
+            window.location.href =
+                "auth.html";
 
         }
 
-    } catch (error) {
+    }
 
-        console.error(error);
 
-        alert("Backend connection error.");
+    /* =====================================================
+       ADD TASK
+    ===================================================== */
+
+    async function addTask() {
+
+        const task =
+            document
+                .getElementById("taskInput")
+                .value
+                .trim();
+
+
+        const deadline =
+            document
+                .getElementById("deadlineInput")
+                .value;
+
+
+        const priority =
+            document
+                .getElementById("priorityInput")
+                .value;
+
+
+        const message =
+            document.getElementById(
+                "addTaskMessage"
+            );
+
+
+        if (!task) {
+
+            message.textContent =
+                "Please enter a task.";
+
+            return;
+        }
+
+
+        message.textContent =
+            "Saving task...";
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/add-task",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                task: task,
+
+                                deadline:
+                                    deadline || null,
+
+                                priority:
+                                    priority
+
+                            })
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            if (data.success) {
+
+                message.textContent =
+                    "✅ Task added successfully!";
+
+
+                document.getElementById(
+                    "taskInput"
+                ).value = "";
+
+
+                document.getElementById(
+                    "deadlineInput"
+                ).value = "";
+
+
+                loadDashboard();
+
+                loadTasks();
+
+            }
+
+            else {
+
+                message.textContent =
+                    "❌ " +
+                    (
+                        data.message ||
+                        "Unable to add task."
+                    );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            message.textContent =
+                "❌ Backend connection error.";
+
+        }
 
     }
-}
 
 
-// =====================================================
-// SNOOZE
-// =====================================================
+    /* =====================================================
+       LOAD TASKS
+    ===================================================== */
 
-async function snoozeTask(id, minutes) {
+    async function loadTasks() {
 
-    try {
+        const container =
+            document.getElementById(
+                "taskList"
+            );
 
-        const response =
-            await apiFetch(
-                `/snooze-task/${id}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        minutes: minutes
-                    })
+
+        container.innerHTML =
+            "Loading tasks...";
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/tasks"
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            allTasks =
+                data.tasks || [];
+
+
+            if (
+                allTasks.length === 0
+            ) {
+
+                container.innerHTML =
+                    "<p>No tasks available.</p>";
+
+                return;
+
+            }
+
+
+            container.innerHTML = "";
+
+
+            allTasks.forEach(
+                task => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "task-item";
+
+
+                    const deadline =
+                        task.deadline
+                            ? formatDate(
+                                task.deadline
+                              )
+                            : "No deadline";
+
+
+                    item.innerHTML = `
+
+                        <div class="task-top">
+
+                            <div>
+
+                                <div class="task-name">
+                                    ${escapeHtml(task.task)}
+                                </div>
+
+                                <div class="task-details">
+
+                                    📅 ${deadline}
+
+                                    <br>
+
+                                    Priority:
+                                    ${task.priority || "MEDIUM"}
+
+                                </div>
+
+                            </div>
+
+                            <div class="priority">
+                                ${task.priority || "MEDIUM"}
+                            </div>
+
+                        </div>
+
+                        ${
+                            task.deadline
+                            ?
+                            `
+                            <div
+                                class="countdown"
+                                data-deadline="${task.deadline}"
+                            >
+                                ⏳ Calculating...
+                            </div>
+                            `
+                            :
+                            ""
+                        }
+
+                        <div class="task-actions">
+
+                            <button
+                                onclick="completeTask(${task.id})"
+                            >
+                                ✅ Complete
+                            </button>
+
+                            <button
+                                onclick="editTask(${task.id})"
+                            >
+                                ✏️ Edit
+                            </button>
+
+                            <button
+                                onclick="deleteTask(${task.id})"
+                            >
+                                🗑️ Delete
+                            </button>
+
+                            <button
+                                onclick="snoozeTask(${task.id},10)"
+                            >
+                                😴 10m
+                            </button>
+
+                            <button
+                                onclick="snoozeTask(${task.id},30)"
+                            >
+                                😴 30m
+                            </button>
+
+                            <button
+                                onclick="snoozeTask(${task.id},60)"
+                            >
+                                😴 1h
+                            </button>
+
+                        </div>
+
+                    `;
+
+
+                    container.appendChild(
+                        item
+                    );
+
                 }
             );
 
-        if (!response) return;
 
-        await response.json();
+            updateCountdowns();
 
-        loadTasks();
 
-    } catch (error) {
+        }
 
-        console.error(error);
+        catch (error) {
+
+            console.error(error);
+
+            container.innerHTML =
+                "❌ Unable to load tasks.";
+
+        }
 
     }
-}
 
 
-// =====================================================
-// DASHBOARD
-// =====================================================
+    /* =====================================================
+       COMPLETE TASK
+    ===================================================== */
 
-async function loadDashboard() {
+    async function completeTask(id) {
 
-    try {
+        try {
 
-        const response =
-            await apiFetch("/tasks");
+            const response =
+                await apiFetch(
+                    `/complete-task/${id}`,
+                    {
+                        method: "POST"
+                    }
+                );
 
-        if (!response) return;
 
-        const data =
+            if (!response) return;
+
+
             await response.json();
 
-        allTasks =
-            data.tasks || [];
+
+            loadTasks();
+
+            loadDashboard();
+
+            loadHistory();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
 
 
-        const total =
-            allTasks.length;
+    /* =====================================================
+       DELETE TASK
+    ===================================================== */
+
+    async function deleteTask(id) {
+
+        if (
+            !confirm(
+                "Delete this task?"
+            )
+        ) {
+
+            return;
+
+        }
 
 
-        const completed =
-            allTasks.filter(
-                task => task.completed === 1
-            ).length;
+        try {
+
+            const response =
+                await apiFetch(
+                    `/delete-task/${id}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            await response.json();
+
+
+            loadTasks();
+
+            loadDashboard();
+
+            loadHistory();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       EDIT TASK
+    ===================================================== */
+
+    async function editTask(id) {
+
+        const task =
+            allTasks.find(
+                item =>
+                    item.id === id
+            );
+
+
+        if (!task) return;
+
+
+        const newTask =
+            prompt(
+                "Edit task:",
+                task.task
+            );
+
+
+        if (
+            newTask === null
+        ) return;
+
+
+        const newDeadline =
+            prompt(
+                "Edit deadline (YYYY-MM-DDTHH:MM):",
+                task.deadline || ""
+            );
+
+
+        if (
+            newDeadline === null
+        ) return;
+
+
+        const newPriority =
+            prompt(
+                "Edit priority (HIGH / MEDIUM / LOW):",
+                task.priority || "MEDIUM"
+            );
+
+
+        if (
+            newPriority === null
+        ) return;
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    `/edit-task/${id}`,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                task:
+                                    newTask,
+
+                                deadline:
+                                    newDeadline,
+
+                                priority:
+                                    newPriority
+                                        .toUpperCase()
+
+                            })
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            if (data.success) {
+
+                loadTasks();
+
+                loadDashboard();
+
+            }
+
+            else {
+
+                alert(
+                    data.message ||
+                    "Unable to edit task."
+                );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SNOOZE
+    ===================================================== */
+
+    async function snoozeTask(
+        id,
+        minutes
+    ) {
+
+        try {
+
+            const response =
+                await apiFetch(
+                    `/snooze-task/${id}`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                minutes:
+                                    minutes
+                            })
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            await response.json();
+
+
+            loadTasks();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       DASHBOARD
+    ===================================================== */
+
+    async function loadDashboard() {
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/tasks"
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            allTasks =
+                data.tasks || [];
+
+
+            const total =
+                allTasks.length;
+
+
+            const completed =
+                allTasks.filter(
+                    task =>
+                        task.completed === 1
+                ).length;
+
+
+            const pending =
+                total - completed;
+
+
+            document.getElementById(
+                "totalTasks"
+            ).textContent =
+                total;
+
+
+            document.getElementById(
+                "completedTasks"
+            ).textContent =
+                completed;
+
+
+            document.getElementById(
+                "pendingTasks"
+            ).textContent =
+                pending;
+
+
+            showNextTask();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       NEXT TASK
+    ===================================================== */
+
+    function showNextTask() {
+
+        const container =
+            document.getElementById(
+                "nextTask"
+            );
 
 
         const pending =
-            total - completed;
-
-
-        document.getElementById("totalTasks")
-            .textContent = total;
-
-        document.getElementById("completedTasks")
-            .textContent = completed;
-
-        document.getElementById("pendingTasks")
-            .textContent = pending;
-
-
-        showNextTask();
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-}
-
-
-// =====================================================
-// NEXT TASK
-// =====================================================
-
-function showNextTask() {
-
-    const container =
-        document.getElementById("nextTask");
-
-
-    const pendingTasks =
-        allTasks.filter(
-            task => task.completed !== 1
-        );
-
-
-    if (pendingTasks.length === 0) {
-
-        container.innerHTML =
-            "🎉 No pending tasks!";
-
-        return;
-    }
-
-
-    const withDeadline =
-        pendingTasks.filter(
-            task => task.deadline
-        );
-
-
-    if (withDeadline.length === 0) {
-
-        container.innerHTML =
-            `📌 ${escapeHtml(pendingTasks[0].task)}`;
-
-        return;
-    }
-
-
-    withDeadline.sort(
-        (a, b) =>
-            new Date(a.deadline) -
-            new Date(b.deadline)
-    );
-
-
-    const next =
-        withDeadline[0];
-
-
-    container.innerHTML = `
-
-        <strong>
-            ${escapeHtml(next.task)}
-        </strong>
-
-        <br><br>
-
-        📅 ${formatDate(next.deadline)}
-
-        <br>
-
-        Priority:
-        <strong>
-            ${next.priority || "MEDIUM"}
-        </strong>
-
-    `;
-}
-
-
-// =====================================================
-// GEMINI DAILY PLAN
-// =====================================================
-
-async function generateDailyPlan() {
-
-    const result =
-        document.getElementById(
-            "dailyPlanResult"
-        );
-
-
-    result.textContent =
-        "🤖 Gemini is analyzing your tasks...";
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/ai-daily-plan"
-            );
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            result.textContent =
-                data.plan ||
-                "No plan available.";
-
-        } else {
-
-            result.textContent =
-                "❌ " +
-                (
-                    data.message ||
-                    "Gemini could not create the plan."
-                );
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        result.textContent =
-            "❌ Unable to connect to Gemini AI.";
-    }
-}
-
-
-// =====================================================
-// GEMINI TASK ANALYZER
-// =====================================================
-
-async function analyzeTaskWithAI() {
-
-    const input =
-        document.getElementById(
-            "aiTaskInput"
-        );
-
-    const result =
-        document.getElementById(
-            "aiTaskResult"
-        );
-
-
-    const task =
-        input.value.trim();
-
-
-    if (!task) {
-
-        result.textContent =
-            "Please enter a task first.";
-
-        return;
-    }
-
-
-    result.textContent =
-        "🤖 Gemini is analyzing your task...";
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/ai-analyze",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        task: task
-                    })
-                }
+            allTasks.filter(
+                task =>
+                    task.completed !== 1
             );
 
 
-        if (!response) return;
-
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            result.textContent =
-                data.ai_response;
-
-        } else {
-
-            result.textContent =
-                "❌ " +
-                (
-                    data.message ||
-                    "Gemini could not analyze the task."
-                );
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        result.textContent =
-            "❌ Unable to connect to Gemini AI.";
-    }
-}
-
-
-// =====================================================
-// GEMINI PRODUCTIVITY COACH
-// =====================================================
-
-async function askAICoach() {
-
-    const result =
-        document.getElementById(
-            "aiCoachResult"
-        );
-
-
-    result.textContent =
-        "🧠 Gemini is reviewing your productivity...";
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/ai-coach",
-                {
-                    method: "POST"
-                }
-            );
-
-
-        if (!response) return;
-
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            result.textContent =
-                data.coach;
-
-        } else {
-
-            result.textContent =
-                "❌ " +
-                (
-                    data.message ||
-                    "AI coach could not respond."
-                );
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        result.textContent =
-            "❌ Unable to connect to Gemini AI.";
-    }
-}
-
-
-// =====================================================
-// INSIGHTS
-// =====================================================
-
-async function loadInsights() {
-
-    const result =
-        document.getElementById(
-            "insightsResult"
-        );
-
-
-    result.textContent =
-        "📊 Analyzing productivity...";
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/productivity-insights"
-            );
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            result.textContent =
-
-                `📋 Total Tasks: ${data.total}
-
-✅ Completed Tasks: ${data.completed}
-
-⏳ Pending Tasks: ${data.pending}
-
-📈 Completion Rate: ${data.completion_rate}%
-
-🔴 High Priority: ${data.high}
-
-🟡 Medium Priority: ${data.medium}
-
-🟢 Low Priority: ${data.low}`;
-
-        } else {
-
-            result.textContent =
-                data.message ||
-                "No insights available.";
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        result.textContent =
-            "❌ Unable to load productivity insights.";
-    }
-}
-
-
-// =====================================================
-// HISTORY
-// =====================================================
-
-async function loadHistory() {
-
-    const container =
-        document.getElementById(
-            "historyList"
-        );
-
-
-    container.innerHTML =
-        "Loading history...";
-
-
-    try {
-
-        const response =
-            await apiFetch("/history");
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-
-        const history =
-            data.history || [];
-
-
-        if (history.length === 0) {
+        if (
+            pending.length === 0
+        ) {
 
             container.innerHTML =
-                "<p>No history available.</p>";
+                "🎉 No pending tasks!";
 
             return;
-        }
-
-
-        container.innerHTML = "";
-
-
-        history.forEach(item => {
-
-            const div =
-                document.createElement("div");
-
-            div.className =
-                "history-item";
-
-
-            div.innerHTML = `
-
-                <strong>
-                    ${escapeHtml(item.task)}
-                </strong>
-
-                <br><br>
-
-                Action:
-                ${escapeHtml(item.action)}
-
-                <br>
-
-                Deadline:
-                ${item.deadline
-                    ? formatDate(item.deadline)
-                    : "None"}
-
-                <br>
-
-                Priority:
-                ${item.priority || "MEDIUM"}
-
-                <br>
-
-                Time:
-                ${formatDate(item.timestamp)}
-
-                <div class="history-actions">
-
-                    <button
-                        class="danger-btn"
-                        onclick="deleteHistory(${item.id})"
-                    >
-                        🗑️ Delete
-                    </button>
-
-                </div>
-
-            `;
-
-
-            container.appendChild(div);
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        container.innerHTML =
-            "❌ Unable to load history.";
-    }
-}
-
-
-// =====================================================
-// DELETE HISTORY
-// =====================================================
-
-async function deleteHistory(id) {
-
-    try {
-
-        const response =
-            await apiFetch(
-                `/delete-history/${id}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-        if (!response) return;
-
-        await response.json();
-
-        loadHistory();
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-}
-
-
-// =====================================================
-// CLEAR ALL TASKS
-// =====================================================
-
-async function clearAllTasks() {
-
-    if (
-        !confirm(
-            "Are you sure you want to clear all tasks?"
-        )
-    ) {
-        return;
-    }
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/clear-tasks",
-                {
-                    method: "DELETE"
-                }
-            );
-
-        if (!response) return;
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            alert(
-                "✅ All tasks cleared."
-            );
-
-            loadHistory();
-            loadDashboard();
-
-        } else {
-
-            alert(
-                data.message ||
-                "Unable to clear tasks."
-            );
 
         }
 
-    } catch (error) {
 
-        console.error(error);
+        const withDeadline =
+            pending.filter(
+                task =>
+                    task.deadline
+            );
 
-        alert(
-            "❌ Backend connection error."
+
+        if (
+            withDeadline.length === 0
+        ) {
+
+            container.innerHTML =
+                `📌 ${escapeHtml(
+                    pending[0].task
+                )}`;
+
+            return;
+
+        }
+
+
+        withDeadline.sort(
+            (a, b) =>
+                new Date(a.deadline) -
+                new Date(b.deadline)
         );
+
+
+        const next =
+            withDeadline[0];
+
+
+        container.innerHTML = `
+
+            <strong>
+                ${escapeHtml(next.task)}
+            </strong>
+
+            <br><br>
+
+            📅 ${formatDate(next.deadline)}
+
+            <br>
+
+            Priority:
+
+            <strong>
+                ${next.priority || "MEDIUM"}
+            </strong>
+
+        `;
+
     }
-}
 
 
-// =====================================================
-// VOICE INPUT
-// =====================================================
+    /* =====================================================
+       DAILY PLAN
+    ===================================================== */
 
-function startVoiceInput() {
+    async function generateDailyPlan() {
 
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-
-    if (!SpeechRecognition) {
-
-        alert(
-            "Voice input is not supported in this browser."
-        );
-
-        return;
-    }
-
-
-    const recognition =
-        new SpeechRecognition();
-
-
-    recognition.lang = "en-IN";
-
-    recognition.interimResults = false;
-
-    recognition.maxAlternatives = 1;
-
-
-    recognition.start();
-
-
-    recognition.onresult =
-        function(event) {
-
-            const transcript =
-                event.results[0][0].transcript;
-
+        const result =
             document.getElementById(
-                "taskInput"
-            ).value = transcript;
-
-        };
+                "dailyPlanResult"
+            );
 
 
-    recognition.onerror =
-        function(event) {
-
-            console.error(event.error);
-
-        };
-}
+        result.textContent =
+            "🤖 Gemini is analyzing your tasks...";
 
 
-// =====================================================
-// COUNTDOWN
-// =====================================================
+        try {
 
-function updateCountdowns() {
-
-    document
-        .querySelectorAll(".countdown")
-        .forEach(element => {
-
-            const deadline =
-                new Date(
-                    element.dataset.deadline
+            const response =
+                await apiFetch(
+                    "/ai-daily-plan"
                 );
 
 
-            const now =
-                new Date();
+            if (!response) return;
 
 
-            const difference =
-                deadline - now;
+            const data =
+                await response.json();
 
 
-            if (difference <= 0) {
+            if (data.success) {
 
-                element.textContent =
-                    "⏰ Deadline reached";
+                result.textContent =
+                    data.plan ||
+                    "No plan available.";
+
+            }
+
+            else {
+
+                result.textContent =
+                    "❌ " +
+                    (
+                        data.message ||
+                        "Unable to generate plan."
+                    );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            result.textContent =
+                "❌ Unable to connect to AI.";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       AI TASK ANALYZER
+    ===================================================== */
+
+    async function analyzeTaskWithAI() {
+
+        const input =
+            document.getElementById(
+                "aiTaskInput"
+            );
+
+
+        const result =
+            document.getElementById(
+                "aiTaskResult"
+            );
+
+
+        const task =
+            input.value.trim();
+
+
+        if (!task) {
+
+            result.textContent =
+                "Please enter a task.";
+
+            return;
+
+        }
+
+
+        result.textContent =
+            "🤖 Gemini is analyzing your task...";
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/ai-analyze",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                task:
+                                    task
+                            })
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            if (data.success) {
+
+                result.textContent =
+                    data.ai_response;
+
+            }
+
+            else {
+
+                result.textContent =
+                    "❌ " +
+                    (
+                        data.message ||
+                        "AI could not analyze task."
+                    );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            result.textContent =
+                "❌ Unable to connect to AI.";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       AI COACH
+    ===================================================== */
+
+    async function askAICoach() {
+
+        const result =
+            document.getElementById(
+                "aiCoachResult"
+            );
+
+
+        result.textContent =
+            "🧠 Gemini is reviewing your productivity...";
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/ai-coach",
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            if (data.success) {
+
+                result.textContent =
+                    data.coach;
+
+            }
+
+            else {
+
+                result.textContent =
+                    "❌ " +
+                    (
+                        data.message ||
+                        "AI coach unavailable."
+                    );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            result.textContent =
+                "❌ Unable to connect to AI.";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       PRODUCTIVITY INSIGHTS
+    ===================================================== */
+
+    async function loadInsights() {
+
+        const result =
+            document.getElementById(
+                "insightsResult"
+            );
+
+
+        result.textContent =
+            "📊 Analyzing productivity...";
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/productivity-insights"
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            if (data.success) {
+
+                result.textContent =
+
+`📋 Total Tasks:
+${data.total}
+
+✅ Completed Tasks:
+${data.completed}
+
+⏳ Pending Tasks:
+${data.pending}
+
+📈 Completion Rate:
+${data.completion_rate}%
+
+🔴 High Priority:
+${data.high}
+
+🟡 Medium Priority:
+${data.medium}
+
+🟢 Low Priority:
+${data.low}`;
+
+            }
+
+            else {
+
+                result.textContent =
+                    data.message ||
+                    "No insights available.";
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            result.textContent =
+                "❌ Unable to load insights.";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       HISTORY
+    ===================================================== */
+
+    async function loadHistory() {
+
+        const container =
+            document.getElementById(
+                "historyList"
+            );
+
+
+        container.innerHTML =
+            "Loading history...";
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/history"
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            const history =
+                data.history || [];
+
+
+            if (
+                history.length === 0
+            ) {
+
+                container.innerHTML =
+                    "<p>No history available.</p>";
 
                 return;
+
             }
 
 
-            const totalSeconds =
-                Math.floor(
-                    difference / 1000
-                );
+            container.innerHTML = "";
 
 
-            const days =
-                Math.floor(
-                    totalSeconds / 86400
-                );
+            history.forEach(
+                item => {
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
 
 
-            const hours =
-                Math.floor(
-                    (totalSeconds % 86400) /
-                    3600
-                );
+                    div.className =
+                        "history-item";
 
 
-            const minutes =
-                Math.floor(
-                    (totalSeconds % 3600) /
-                    60
-                );
+                    div.innerHTML = `
+
+                        <strong>
+                            ${escapeHtml(item.task)}
+                        </strong>
+
+                        <br><br>
+
+                        Action:
+                        ${escapeHtml(item.action)}
+
+                        <br>
+
+                        Deadline:
+                        ${
+                            item.deadline
+                            ?
+                            formatDate(item.deadline)
+                            :
+                            "None"
+                        }
+
+                        <br>
+
+                        Priority:
+                        ${item.priority || "MEDIUM"}
+
+                        <br>
+
+                        Time:
+                        ${formatDate(item.timestamp)}
+
+                        <div class="history-actions">
+
+                            <button
+                                class="danger-btn"
+                                onclick="deleteHistory(${item.id})"
+                            >
+                                🗑️ Delete
+                            </button>
+
+                        </div>
+
+                    `;
 
 
-            const seconds =
-                totalSeconds % 60;
+                    container.appendChild(
+                        div
+                    );
 
+                }
+            );
 
-            element.textContent =
-                `⏳ ${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+        }
 
-        });
-}
+        catch (error) {
 
+            console.error(error);
 
-// =====================================================
-// FORMAT DATE
-// =====================================================
+            container.innerHTML =
+                "❌ Unable to load history.";
 
-function formatDate(value) {
+        }
 
-    if (!value) return "None";
-
-
-    const date =
-        new Date(value);
-
-
-    if (isNaN(date)) {
-
-        return value;
     }
 
 
-    return date.toLocaleString(
-        "en-IN",
-        {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true
+    /* =====================================================
+       DELETE HISTORY
+    ===================================================== */
+
+    async function deleteHistory(id) {
+
+        try {
+
+            const response =
+                await apiFetch(
+                    `/delete-history/${id}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            await response.json();
+
+
+            loadHistory();
+
         }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =====================================================
+       CLEAR ALL TASKS
+    ===================================================== */
+
+    async function clearAllTasks() {
+
+        if (
+            !confirm(
+                "Are you sure you want to clear all tasks?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/clear-tasks",
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response) return;
+
+
+            const data =
+                await response.json();
+
+
+            if (data.success) {
+
+                alert(
+                    "✅ All tasks cleared."
+                );
+
+
+                loadHistory();
+
+                loadDashboard();
+
+                loadTasks();
+
+            }
+
+            else {
+
+                alert(
+                    data.message ||
+                    "Unable to clear tasks."
+                );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            alert(
+                "❌ Backend connection error."
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       VOICE INPUT
+    ===================================================== */
+
+    function startVoiceInput() {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        if (!SpeechRecognition) {
+
+            alert(
+                "Voice input is not supported in this browser."
+            );
+
+            return;
+
+        }
+
+
+        const recognition =
+            new SpeechRecognition();
+
+
+        recognition.lang =
+            "en-IN";
+
+
+        recognition.interimResults =
+            false;
+
+
+        recognition.maxAlternatives =
+            1;
+
+
+        recognition.start();
+
+
+        recognition.onresult =
+            function(event) {
+
+                const transcript =
+                    event
+                        .results[0][0]
+                        .transcript;
+
+
+                document.getElementById(
+                    "taskInput"
+                ).value =
+                    transcript;
+
+            };
+
+
+        recognition.onerror =
+            function(event) {
+
+                console.error(
+                    event.error
+                );
+
+            };
+
+    }
+
+
+    /* =====================================================
+       COUNTDOWN
+    ===================================================== */
+
+    function updateCountdowns() {
+
+        document
+            .querySelectorAll(
+                ".countdown"
+            )
+            .forEach(
+                element => {
+
+                    const deadline =
+                        new Date(
+                            element.dataset
+                                .deadline
+                        );
+
+
+                    const now =
+                        new Date();
+
+
+                    const difference =
+                        deadline - now;
+
+
+                    if (
+                        difference <= 0
+                    ) {
+
+                        element.textContent =
+                            "⏰ Deadline reached";
+
+                        return;
+
+                    }
+
+
+                    const seconds =
+                        Math.floor(
+                            difference / 1000
+                        );
+
+
+                    const days =
+                        Math.floor(
+                            seconds / 86400
+                        );
+
+
+                    const hours =
+                        Math.floor(
+                            (
+                                seconds % 86400
+                            ) / 3600
+                        );
+
+
+                    const minutes =
+                        Math.floor(
+                            (
+                                seconds % 3600
+                            ) / 60
+                        );
+
+
+                    const sec =
+                        seconds % 60;
+
+
+                    element.textContent =
+                        `⏳ ${days}d ${hours}h ${minutes}m ${sec}s remaining`;
+
+                }
+            );
+
+    }
+
+
+    /* =====================================================
+       DATE FORMAT
+    ===================================================== */
+
+    function formatDate(value) {
+
+        if (!value) {
+
+            return "None";
+
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (
+            isNaN(date)
+        ) {
+
+            return value;
+
+        }
+
+
+        return date.toLocaleString(
+            "en-IN",
+            {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       SECURITY
+    ===================================================== */
+
+    function escapeHtml(text) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.textContent =
+            text ?? "";
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* =====================================================
+       START APPLICATION
+    ===================================================== */
+
+    setInterval(
+        updateCountdowns,
+        1000
     );
-}
 
 
-// =====================================================
-// MESSAGE
-// =====================================================
-
-function showMessage(id, text) {
-
-    const element =
-        document.getElementById(id);
-
-
-    element.textContent =
-        text;
-
-    element.style.display =
-        "block";
-
-
-    setTimeout(
-        () => {
-
-            element.style.display =
-                "none";
-
-        },
-        3000
-    );
-}
-
-
-// =====================================================
-// SECURITY
-// =====================================================
-
-function escapeHtml(text) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        text ?? "";
-
-    return div.innerHTML;
-}
-
-
-// =====================================================
-// START
-// =====================================================
-
-updateDate();
-
-setInterval(
-    updateCountdowns,
-    1000
-);
-
-checkLogin();
+    checkLogin();
 
 </script>
 
