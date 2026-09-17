@@ -1001,37 +1001,111 @@
 
     async function apiFetch(url, options = {}) {
 
-        options.credentials = "include";
-
         try {
 
-            const response = await fetch(
-                API_URL + url,
-                options
+            const requestOptions = {
+                ...options,
+
+                credentials: "include",
+
+                headers: {
+                    "Accept": "application/json",
+                    ...(options.headers || {})
+                }
+            };
+
+
+            console.log(
+                "Connecting to:",
+                API_URL + url
             );
 
-            if (response.status === 401) {
 
-                window.location.href = "auth.html";
+            const response =
+                await fetch(
+                    API_URL + url,
+                    requestOptions
+                );
+
+
+            console.log(
+                "Backend status:",
+                response.status
+            );
+
+
+            console.log(
+                "Backend response URL:",
+                response.url
+            );
+
+
+            if (
+                response.status === 401
+            ) {
+
+                console.log(
+                    "User is not logged in."
+                );
+
+
+                window.location.href =
+                    "auth.html";
+
 
                 return null;
+
             }
+
+
+            if (
+                !response.ok
+            ) {
+
+                const errorText =
+                    await response.text();
+
+
+                console.error(
+                    "Backend returned error:",
+                    response.status,
+                    errorText
+                );
+
+
+                alert(
+                    "Backend Error: " +
+                    response.status
+                );
+
+
+                return null;
+
+            }
+
 
             return response;
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(
-                "Backend connection error:",
+                "REAL BACKEND ERROR:",
                 error
             );
 
+
             alert(
-                "Unable to connect to the backend."
+                "Backend Connection Error:\n\n" +
+                error.message
             );
 
+
             return null;
+
         }
+
     }
 
 
@@ -1043,62 +1117,84 @@
 
         document
             .querySelectorAll(".page")
-            .forEach(page => {
+            .forEach(
+                page => {
 
-                page.classList.remove("active");
+                    page.classList.remove(
+                        "active"
+                    );
 
-            });
+                }
+            );
 
 
         const page =
-            document.getElementById(pageId);
+            document.getElementById(
+                pageId
+            );
 
 
         if (page) {
 
-            page.classList.add("active");
+            page.classList.add(
+                "active"
+            );
 
         }
 
 
         document
             .querySelectorAll(".nav-btn")
-            .forEach(btn => {
+            .forEach(
+                btn => {
 
-                btn.classList.remove("active");
+                    btn.classList.remove(
+                        "active"
+                    );
 
-            });
+                }
+            );
 
 
         if (button) {
 
-            button.classList.add("active");
+            button.classList.add(
+                "active"
+            );
 
         }
 
 
-        if (pageId === "dashboard") {
+        if (
+            pageId === "dashboard"
+        ) {
 
             loadDashboard();
 
         }
 
 
-        if (pageId === "tasks") {
+        if (
+            pageId === "tasks"
+        ) {
 
             loadTasks();
 
         }
 
 
-        if (pageId === "history") {
+        if (
+            pageId === "history"
+        ) {
 
             loadHistory();
 
         }
 
 
-        if (pageId === "insights") {
+        if (
+            pageId === "insights"
+        ) {
 
             loadInsights();
 
@@ -1111,11 +1207,20 @@
 
         const button =
             Array.from(
-                document.querySelectorAll(".nav-btn")
+                document.querySelectorAll(
+                    ".nav-btn"
+                )
             ).find(
                 btn =>
-                    btn.getAttribute("onclick")
-                        ?.includes("'" + pageId + "'")
+                    btn
+                        .getAttribute(
+                            "onclick"
+                        )
+                        ?.includes(
+                            "'" +
+                            pageId +
+                            "'"
+                        )
             );
 
 
@@ -1152,12 +1257,6 @@
                 await response.json();
 
 
-            /*
-             * IMPORTANT:
-             * Backend returns logged_in,
-             * not success.
-             */
-
             if (
                 data.logged_in === true &&
                 data.user
@@ -1188,6 +1287,7 @@
                 "Login check error:",
                 error
             );
+
 
             document.getElementById(
                 "loggedUser"
@@ -1234,20 +1334,26 @@
 
         const task =
             document
-                .getElementById("taskInput")
+                .getElementById(
+                    "taskInput"
+                )
                 .value
                 .trim();
 
 
         const deadline =
             document
-                .getElementById("deadlineInput")
+                .getElementById(
+                    "deadlineInput"
+                )
                 .value;
 
 
         const priority =
             document
-                .getElementById("priorityInput")
+                .getElementById(
+                    "priorityInput"
+                )
                 .value;
 
 
@@ -1263,6 +1369,7 @@
                 "Please enter a task.";
 
             return;
+
         }
 
 
@@ -1286,7 +1393,8 @@
                         body:
                             JSON.stringify({
 
-                                task: task,
+                                task:
+                                    task,
 
                                 deadline:
                                     deadline || null,
@@ -1295,18 +1403,25 @@
                                     priority
 
                             })
+
                     }
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
                 message.textContent =
                     "✅ Task added successfully!";
@@ -1314,17 +1429,19 @@
 
                 document.getElementById(
                     "taskInput"
-                ).value = "";
+                ).value =
+                    "";
 
 
                 document.getElementById(
                     "deadlineInput"
-                ).value = "";
+                ).value =
+                    "";
 
 
-                loadDashboard();
+                await loadDashboard();
 
-                loadTasks();
+                await loadTasks();
 
             }
 
@@ -1343,7 +1460,10 @@
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             message.textContent =
                 "❌ Backend connection error.";
@@ -1377,7 +1497,11 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
@@ -1400,7 +1524,8 @@
             }
 
 
-            container.innerHTML = "";
+            container.innerHTML =
+                "";
 
 
             allTasks.forEach(
@@ -1441,17 +1566,24 @@
                                     <br>
 
                                     Priority:
-                                    ${task.priority || "MEDIUM"}
+                                    ${escapeHtml(
+                                        task.priority ||
+                                        "MEDIUM"
+                                    )}
 
                                 </div>
 
                             </div>
 
                             <div class="priority">
-                                ${task.priority || "MEDIUM"}
+                                ${escapeHtml(
+                                    task.priority ||
+                                    "MEDIUM"
+                                )}
                             </div>
 
                         </div>
+
 
                         ${
                             task.deadline
@@ -1459,7 +1591,9 @@
                             `
                             <div
                                 class="countdown"
-                                data-deadline="${task.deadline}"
+                                data-deadline="${escapeHtml(
+                                    task.deadline
+                                )}"
                             >
                                 ⏳ Calculating...
                             </div>
@@ -1467,6 +1601,7 @@
                             :
                             ""
                         }
+
 
                         <div class="task-actions">
 
@@ -1521,12 +1656,14 @@
 
             updateCountdowns();
 
-
         }
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             container.innerHTML =
                 "❌ Unable to load tasks.";
@@ -1553,23 +1690,29 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             await response.json();
 
 
-            loadTasks();
+            await loadTasks();
 
-            loadDashboard();
+            await loadDashboard();
 
-            loadHistory();
+            await loadHistory();
 
         }
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -1604,23 +1747,29 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             await response.json();
 
 
-            loadTasks();
+            await loadTasks();
 
-            loadDashboard();
+            await loadDashboard();
 
-            loadHistory();
+            await loadHistory();
 
         }
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -1640,7 +1789,11 @@
             );
 
 
-        if (!task) return;
+        if (!task) {
+
+            return;
+
+        }
 
 
         const newTask =
@@ -1652,7 +1805,11 @@
 
         if (
             newTask === null
-        ) return;
+        ) {
+
+            return;
+
+        }
 
 
         const newDeadline =
@@ -1664,19 +1821,28 @@
 
         if (
             newDeadline === null
-        ) return;
+        ) {
+
+            return;
+
+        }
 
 
         const newPriority =
             prompt(
                 "Edit priority (HIGH / MEDIUM / LOW):",
-                task.priority || "MEDIUM"
+                task.priority ||
+                "MEDIUM"
             );
 
 
         if (
             newPriority === null
-        ) return;
+        ) {
+
+            return;
+
+        }
 
 
         try {
@@ -1706,22 +1872,29 @@
                                         .toUpperCase()
 
                             })
+
                     }
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
-                loadTasks();
+                await loadTasks();
 
-                loadDashboard();
+                await loadDashboard();
 
             }
 
@@ -1738,7 +1911,9 @@
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -1772,23 +1947,30 @@
                                 minutes:
                                     minutes
                             })
+
                     }
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             await response.json();
 
 
-            loadTasks();
+            await loadTasks();
 
         }
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -1809,7 +1991,11 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
@@ -1832,7 +2018,8 @@
 
 
             const pending =
-                total - completed;
+                total -
+                completed;
 
 
             document.getElementById(
@@ -1859,7 +2046,9 @@
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -1920,8 +2109,12 @@
 
         withDeadline.sort(
             (a, b) =>
-                new Date(a.deadline) -
-                new Date(b.deadline)
+                new Date(
+                    a.deadline
+                ) -
+                new Date(
+                    b.deadline
+                )
         );
 
 
@@ -1932,19 +2125,26 @@
         container.innerHTML = `
 
             <strong>
-                ${escapeHtml(next.task)}
+                ${escapeHtml(
+                    next.task
+                )}
             </strong>
 
             <br><br>
 
-            📅 ${formatDate(next.deadline)}
+            📅 ${formatDate(
+                next.deadline
+            )}
 
             <br>
 
             Priority:
 
             <strong>
-                ${next.priority || "MEDIUM"}
+                ${escapeHtml(
+                    next.priority ||
+                    "MEDIUM"
+                )}
             </strong>
 
         `;
@@ -1976,14 +2176,20 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
                 result.textContent =
                     data.plan ||
@@ -2006,7 +2212,10 @@
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             result.textContent =
                 "❌ Unable to connect to AI.";
@@ -2070,18 +2279,25 @@
                                 task:
                                     task
                             })
+
                     }
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
                 result.textContent =
                     data.ai_response;
@@ -2103,7 +2319,10 @@
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             result.textContent =
                 "❌ Unable to connect to AI.";
@@ -2140,14 +2359,20 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
                 result.textContent =
                     data.coach;
@@ -2169,7 +2394,10 @@
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             result.textContent =
                 "❌ Unable to connect to AI.";
@@ -2203,14 +2431,20 @@
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
                 result.textContent =
 
@@ -2249,7 +2483,10 @@ ${data.low}`;
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             result.textContent =
                 "❌ Unable to load insights.";
@@ -2283,7 +2520,11 @@ ${data.low}`;
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
@@ -2306,7 +2547,8 @@ ${data.low}`;
             }
 
 
-            container.innerHTML = "";
+            container.innerHTML =
+                "";
 
 
             history.forEach(
@@ -2325,13 +2567,17 @@ ${data.low}`;
                     div.innerHTML = `
 
                         <strong>
-                            ${escapeHtml(item.task)}
+                            ${escapeHtml(
+                                item.task
+                            )}
                         </strong>
 
                         <br><br>
 
                         Action:
-                        ${escapeHtml(item.action)}
+                        ${escapeHtml(
+                            item.action
+                        )}
 
                         <br>
 
@@ -2339,7 +2585,9 @@ ${data.low}`;
                         ${
                             item.deadline
                             ?
-                            formatDate(item.deadline)
+                            formatDate(
+                                item.deadline
+                            )
                             :
                             "None"
                         }
@@ -2347,12 +2595,17 @@ ${data.low}`;
                         <br>
 
                         Priority:
-                        ${item.priority || "MEDIUM"}
+                        ${escapeHtml(
+                            item.priority ||
+                            "MEDIUM"
+                        )}
 
                         <br>
 
                         Time:
-                        ${formatDate(item.timestamp)}
+                        ${formatDate(
+                            item.timestamp
+                        )}
 
                         <div class="history-actions">
 
@@ -2379,7 +2632,10 @@ ${data.low}`;
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             container.innerHTML =
                 "❌ Unable to load history.";
@@ -2406,19 +2662,25 @@ ${data.low}`;
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             await response.json();
 
 
-            loadHistory();
+            await loadHistory();
 
         }
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
         }
 
@@ -2453,25 +2715,31 @@ ${data.low}`;
                 );
 
 
-            if (!response) return;
+            if (!response) {
+
+                return;
+
+            }
 
 
             const data =
                 await response.json();
 
 
-            if (data.success) {
+            if (
+                data.success
+            ) {
 
                 alert(
                     "✅ All tasks cleared."
                 );
 
 
-                loadHistory();
+                await loadHistory();
 
-                loadDashboard();
+                await loadDashboard();
 
-                loadTasks();
+                await loadTasks();
 
             }
 
@@ -2488,7 +2756,10 @@ ${data.low}`;
 
         catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             alert(
                 "❌ Backend connection error."
@@ -2584,7 +2855,8 @@ ${data.low}`;
 
                     const deadline =
                         new Date(
-                            element.dataset
+                            element
+                                .dataset
                                 .deadline
                         );
 
@@ -2594,7 +2866,8 @@ ${data.low}`;
 
 
                     const difference =
-                        deadline - now;
+                        deadline -
+                        now;
 
 
                     if (
@@ -2611,34 +2884,41 @@ ${data.low}`;
 
                     const seconds =
                         Math.floor(
-                            difference / 1000
+                            difference /
+                            1000
                         );
 
 
                     const days =
                         Math.floor(
-                            seconds / 86400
+                            seconds /
+                            86400
                         );
 
 
                     const hours =
                         Math.floor(
                             (
-                                seconds % 86400
-                            ) / 3600
+                                seconds %
+                                86400
+                            ) /
+                            3600
                         );
 
 
                     const minutes =
                         Math.floor(
                             (
-                                seconds % 3600
-                            ) / 60
+                                seconds %
+                                3600
+                            ) /
+                            60
                         );
 
 
                     const sec =
-                        seconds % 60;
+                        seconds %
+                        60;
 
 
                     element.textContent =
@@ -2664,11 +2944,15 @@ ${data.low}`;
 
 
         const date =
-            new Date(value);
+            new Date(
+                value
+            );
 
 
         if (
-            isNaN(date)
+            isNaN(
+                date
+            )
         ) {
 
             return value;
@@ -2679,12 +2963,23 @@ ${data.low}`;
         return date.toLocaleString(
             "en-IN",
             {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true
+                day:
+                    "numeric",
+
+                month:
+                    "short",
+
+                year:
+                    "numeric",
+
+                hour:
+                    "numeric",
+
+                minute:
+                    "2-digit",
+
+                hour12:
+                    true
             }
         );
 
