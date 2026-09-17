@@ -50,24 +50,32 @@ app = Flask(__name__)
 
 app.secret_key = FLASK_SECRET_KEY
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
+
+cors_origins = [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500"
+]
+
+if FRONTEND_URL:
+    cors_origins.append(FRONTEND_URL.rstrip("/"))
+
 CORS(
     app,
     supports_credentials=True,
-    origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ]
+    origins=cors_origins
 )
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.getenv("RENDER", "").lower() == "true"
+app.config["SESSION_COOKIE_SAMESITE"] = "None" if app.config["SESSION_COOKIE_SECURE"] else "Lax"
 
 
 # =========================================================
 # DATABASE
 # =========================================================
 
-DATABASE = "ai_assistant.db"
+DATABASE = os.getenv("DATABASE_PATH", "ai_assistant.db")
 
 
 def get_connection():
@@ -129,6 +137,9 @@ def create_tables():
 
     print("✅ Database ready!")
 
+
+# Initialize database for both local Python execution and Gunicorn/Render imports.
+create_tables()
 
 # =========================================================
 # HOME
@@ -1344,14 +1355,19 @@ def reminder_worker():
 
 if __name__ == "__main__":
 
-    create_tables()
-
-    reminder_thread = threading.Thread(
-        target=reminder_worker,
-        daemon=True
+    enable_desktop_reminders = (
+        os.getenv("ENABLE_DESKTOP_REMINDERS", "true").lower() == "true"
+        and WINOTIFY_AVAILABLE
     )
 
-    reminder_thread.start()
+    if enable_desktop_reminders:
+        reminder_thread = threading.Thread(
+            target=reminder_worker,
+            daemon=True
+        )
+        reminder_thread.start()
+    else:
+        print("⏰ Desktop reminders disabled (hosted/non-Windows mode).")
 
     print("")
     print("========================================")
@@ -1368,9 +1384,11 @@ if __name__ == "__main__":
     print("========================================")
     print("")
 
+    port = int(os.getenv("PORT", "5000"))
+
     app.run(
-        host="127.0.0.1",
-        port=5000,
-        debug=True,
+        host="0.0.0.0",
+        port=port,
+        debug=False,
         use_reloader=False
     )
