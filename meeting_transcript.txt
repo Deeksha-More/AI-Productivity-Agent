@@ -1,0 +1,15 @@
+Meeting Topic: AI Agent Project
+
+Speaker 1: Today we discussed our AI Agent project.
+
+Speaker 2: We decided to build an AI Meeting Assistant.
+
+Speaker 3: I will work on the frontend of the project.
+
+Speaker 4: I will work on the database and backend.
+
+Speaker 1: The project should be completed by next Friday.
+
+Speaker 2: We also decided that the AI should summarize meetings and identify important tasks.
+
+Speaker 3: We should test the system before the final presentation.
