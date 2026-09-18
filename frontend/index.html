@@ -1236,7 +1236,7 @@
        LOGIN CHECK
     ===================================================== */
 
-   async function checkLogin() {
+  async function checkLogin() {
     try {
         const response = await apiFetch("/current-user");
 
@@ -1246,16 +1246,32 @@
 
         const data = await response.json();
 
+        console.log("CURRENT USER DATA:", data);
+
         if (data.logged_in === true && data.user) {
-            document.getElementById("loggedUser").textContent =
-                data.user.name;
+
+            let userName = "";
+
+            if (typeof data.user === "object") {
+                userName =
+                    data.user.name ||
+                    data.user.username ||
+                    data.user.email ||
+                    "User";
+            } else {
+                userName = String(data.user);
+            }
+
+            document.getElementById("loggedUser").textContent = userName;
 
             await loadDashboard();
+
         } else {
             window.location.href = "auth.html";
         }
 
     } catch (error) {
+
         console.error("Login check error:", error);
 
         document.getElementById("loggedUser").textContent =
