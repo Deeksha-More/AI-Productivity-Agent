@@ -496,8 +496,6 @@
 
 <div class="app">
 
-    <!-- ================= SIDEBAR ================= -->
-
     <aside class="sidebar">
 
         <div class="logo">
@@ -576,11 +574,9 @@
 
     </aside>
 
-    <!-- ================= MAIN ================= -->
-
     <main class="main">
 
-        <!-- ================= DASHBOARD ================= -->
+        <!-- DASHBOARD -->
 
         <section
             id="dashboard"
@@ -668,7 +664,7 @@
 
         </section>
 
-        <!-- ================= ADD TASK ================= -->
+        <!-- ADD TASK -->
 
         <section
             id="addTask"
@@ -765,7 +761,7 @@
 
         </section>
 
-        <!-- ================= MY TASKS ================= -->
+        <!-- MY TASKS -->
 
         <section
             id="tasks"
@@ -792,7 +788,7 @@
 
         </section>
 
-        <!-- ================= DAILY PLAN ================= -->
+        <!-- DAILY PLAN -->
 
         <section
             id="dailyPlan"
@@ -829,7 +825,7 @@
 
         </section>
 
-        <!-- ================= AI ASSISTANT ================= -->
+        <!-- AI ASSISTANT -->
 
         <section
             id="assistant"
@@ -901,7 +897,7 @@
 
         </section>
 
-        <!-- ================= INSIGHTS ================= -->
+        <!-- INSIGHTS -->
 
         <section
             id="insights"
@@ -938,7 +934,7 @@
 
         </section>
 
-        <!-- ================= HISTORY ================= -->
+        <!-- HISTORY -->
 
         <section
             id="history"
@@ -981,7 +977,7 @@
 <script>
 
     /* =====================================================
-       RENDER BACKEND
+       BACKEND
     ===================================================== */
 
     const API_URL =
@@ -1014,12 +1010,10 @@
                 }
             };
 
-
             console.log(
                 "Connecting to:",
                 API_URL + url
             );
-
 
             const response =
                 await fetch(
@@ -1027,85 +1021,54 @@
                     requestOptions
                 );
 
-
             console.log(
                 "Backend status:",
                 response.status
             );
 
-
-            console.log(
-                "Backend response URL:",
-                response.url
-            );
-
-
-            if (
-                response.status === 401
-            ) {
-
-                console.log(
-                    "User is not logged in."
-                );
-
+            if (response.status === 401) {
 
                 window.location.href =
                     "auth.html";
 
-
                 return null;
-
             }
 
-
-            if (
-                !response.ok
-            ) {
+            if (!response.ok) {
 
                 const errorText =
                     await response.text();
 
-
                 console.error(
-                    "Backend returned error:",
+                    "Backend Error:",
                     response.status,
                     errorText
                 );
-
 
                 alert(
                     "Backend Error: " +
                     response.status
                 );
 
-
                 return null;
-
             }
-
 
             return response;
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(
-                "REAL BACKEND ERROR:",
+                "Backend Connection Error:",
                 error
             );
-
 
             alert(
                 "Backend Connection Error:\n\n" +
                 error.message
             );
 
-
             return null;
-
         }
-
     }
 
 
@@ -1117,89 +1080,58 @@
 
         document
             .querySelectorAll(".page")
-            .forEach(
-                page => {
+            .forEach(page => {
 
-                    page.classList.remove(
-                        "active"
-                    );
+                page.classList.remove("active");
 
-                }
-            );
-
+            });
 
         const page =
-            document.getElementById(
-                pageId
-            );
-
+            document.getElementById(pageId);
 
         if (page) {
 
-            page.classList.add(
-                "active"
-            );
+            page.classList.add("active");
 
         }
-
 
         document
             .querySelectorAll(".nav-btn")
-            .forEach(
-                btn => {
+            .forEach(btn => {
 
-                    btn.classList.remove(
-                        "active"
-                    );
+                btn.classList.remove("active");
 
-                }
-            );
-
+            });
 
         if (button) {
 
-            button.classList.add(
-                "active"
-            );
+            button.classList.add("active");
 
         }
 
-
-        if (
-            pageId === "dashboard"
-        ) {
+        if (pageId === "dashboard") {
 
             loadDashboard();
 
         }
 
-
-        if (
-            pageId === "tasks"
-        ) {
+        if (pageId === "tasks") {
 
             loadTasks();
 
         }
 
-
-        if (
-            pageId === "history"
-        ) {
+        if (pageId === "history") {
 
             loadHistory();
 
         }
 
-
-        if (
-            pageId === "insights"
-        ) {
+        if (pageId === "insights") {
 
             loadInsights();
 
         }
-
     }
 
 
@@ -1207,28 +1139,17 @@
 
         const button =
             Array.from(
-                document.querySelectorAll(
-                    ".nav-btn"
-                )
-            ).find(
-                btn =>
-                    btn
-                        .getAttribute(
-                            "onclick"
-                        )
-                        ?.includes(
-                            "'" +
-                            pageId +
-                            "'"
-                        )
+                document.querySelectorAll(".nav-btn")
+            ).find(btn =>
+                btn
+                    .getAttribute("onclick")
+                    ?.includes("'" + pageId + "'")
             );
-
 
         showPage(
             pageId,
             button
         );
-
     }
 
 
@@ -1236,48 +1157,88 @@
        LOGIN CHECK
     ===================================================== */
 
-  async function checkLogin() {
-    try {
-        const response = await apiFetch("/current-user");
+    async function checkLogin() {
 
-        if (!response) {
-            return;
-        }
+        try {
 
-        const data = await response.json();
+            const response =
+                await apiFetch(
+                    "/current-user"
+                );
 
-        console.log("CURRENT USER DATA:", data);
+            if (!response) {
 
-        if (data.logged_in === true && data.user) {
+                return;
 
-            let userName = "";
-
-            if (typeof data.user === "object") {
-                userName =
-                    data.user.name ||
-                    data.user.username ||
-                    data.user.email ||
-                    "User";
-            } else {
-                userName = String(data.user);
             }
 
-            document.getElementById("loggedUser").textContent = userName;
+            const data =
+                await response.json();
 
-            await loadDashboard();
+            console.log(
+                "CURRENT USER DATA:",
+                data
+            );
 
-        } else {
-            window.location.href = "auth.html";
+            if (
+                data.logged_in === true &&
+                data.user
+            ) {
+
+                /*
+                 * IMPORTANT:
+                 * data.user is an object.
+                 * We must display data.user.name.
+                 */
+
+                let userName = "User";
+
+                if (
+                    typeof data.user === "object" &&
+                    data.user !== null
+                ) {
+
+                    userName =
+                        data.user.name ||
+                        data.user.username ||
+                        data.user.email ||
+                        "User";
+
+                } else {
+
+                    userName =
+                        String(data.user);
+
+                }
+
+                document.getElementById(
+                    "loggedUser"
+                ).textContent =
+                    userName;
+
+                await loadDashboard();
+
+            } else {
+
+                window.location.href =
+                    "auth.html";
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Login check error:",
+                error
+            );
+
+            document.getElementById(
+                "loggedUser"
+            ).textContent =
+                "Connection Error";
+
         }
-
-    } catch (error) {
-
-        console.error("Login check error:", error);
-
-        document.getElementById("loggedUser").textContent =
-            "Connection Error";
     }
-}
 
 
     /* =====================================================
@@ -1295,15 +1256,12 @@
                 }
             );
 
-        }
-
-        finally {
+        } finally {
 
             window.location.href =
                 "auth.html";
 
         }
-
     }
 
 
@@ -1315,34 +1273,24 @@
 
         const task =
             document
-                .getElementById(
-                    "taskInput"
-                )
+                .getElementById("taskInput")
                 .value
                 .trim();
 
-
         const deadline =
             document
-                .getElementById(
-                    "deadlineInput"
-                )
+                .getElementById("deadlineInput")
                 .value;
-
 
         const priority =
             document
-                .getElementById(
-                    "priorityInput"
-                )
+                .getElementById("priorityInput")
                 .value;
-
 
         const message =
             document.getElementById(
                 "addTaskMessage"
             );
-
 
         if (!task) {
 
@@ -1350,13 +1298,10 @@
                 "Please enter a task.";
 
             return;
-
         }
-
 
         message.textContent =
             "Saving task...";
-
 
         try {
 
@@ -1373,60 +1318,40 @@
 
                         body:
                             JSON.stringify({
-
-                                task:
-                                    task,
-
+                                task: task,
                                 deadline:
                                     deadline || null,
-
                                 priority:
                                     priority
-
                             })
-
                     }
                 );
-
 
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 message.textContent =
                     "✅ Task added successfully!";
 
-
                 document.getElementById(
                     "taskInput"
-                ).value =
-                    "";
-
+                ).value = "";
 
                 document.getElementById(
                     "deadlineInput"
-                ).value =
-                    "";
-
+                ).value = "";
 
                 await loadDashboard();
-
                 await loadTasks();
 
-            }
-
-            else {
+            } else {
 
                 message.textContent =
                     "❌ " +
@@ -1434,23 +1359,16 @@
                         data.message ||
                         "Unable to add task."
                     );
-
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             message.textContent =
                 "❌ Backend connection error.";
 
         }
-
     }
 
 
@@ -1465,10 +1383,8 @@
                 "taskList"
             );
 
-
         container.innerHTML =
             "Loading tasks...";
-
 
         try {
 
@@ -1477,21 +1393,16 @@
                     "/tasks"
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
             allTasks =
                 data.tasks || [];
-
 
             if (
                 allTasks.length === 0
@@ -1501,156 +1412,137 @@
                     "<p>No tasks available.</p>";
 
                 return;
-
             }
-
 
             container.innerHTML =
                 "";
 
+            allTasks.forEach(task => {
 
-            allTasks.forEach(
-                task => {
+                const item =
+                    document.createElement(
+                        "div"
+                    );
 
-                    const item =
-                        document.createElement(
-                            "div"
-                        );
+                item.className =
+                    "task-item";
 
+                const deadline =
+                    task.deadline
+                        ? formatDate(
+                            task.deadline
+                          )
+                        : "No deadline";
 
-                    item.className =
-                        "task-item";
+                item.innerHTML = `
 
+                    <div class="task-top">
 
-                    const deadline =
-                        task.deadline
-                            ? formatDate(
-                                task.deadline
-                              )
-                            : "No deadline";
+                        <div>
 
-
-                    item.innerHTML = `
-
-                        <div class="task-top">
-
-                            <div>
-
-                                <div class="task-name">
-                                    ${escapeHtml(task.task)}
-                                </div>
-
-                                <div class="task-details">
-
-                                    📅 ${deadline}
-
-                                    <br>
-
-                                    Priority:
-                                    ${escapeHtml(
-                                        task.priority ||
-                                        "MEDIUM"
-                                    )}
-
-                                </div>
-
+                            <div class="task-name">
+                                ${escapeHtml(task.task)}
                             </div>
 
-                            <div class="priority">
+                            <div class="task-details">
+
+                                📅 ${deadline}
+
+                                <br>
+
+                                Priority:
                                 ${escapeHtml(
                                     task.priority ||
                                     "MEDIUM"
                                 )}
+
                             </div>
 
                         </div>
 
+                        <div class="priority">
 
-                        ${
-                            task.deadline
-                            ?
-                            `
-                            <div
-                                class="countdown"
-                                data-deadline="${escapeHtml(
-                                    task.deadline
-                                )}"
-                            >
-                                ⏳ Calculating...
-                            </div>
-                            `
-                            :
-                            ""
-                        }
-
-
-                        <div class="task-actions">
-
-                            <button
-                                onclick="completeTask(${task.id})"
-                            >
-                                ✅ Complete
-                            </button>
-
-                            <button
-                                onclick="editTask(${task.id})"
-                            >
-                                ✏️ Edit
-                            </button>
-
-                            <button
-                                onclick="deleteTask(${task.id})"
-                            >
-                                🗑️ Delete
-                            </button>
-
-                            <button
-                                onclick="snoozeTask(${task.id},10)"
-                            >
-                                😴 10m
-                            </button>
-
-                            <button
-                                onclick="snoozeTask(${task.id},30)"
-                            >
-                                😴 30m
-                            </button>
-
-                            <button
-                                onclick="snoozeTask(${task.id},60)"
-                            >
-                                😴 1h
-                            </button>
+                            ${escapeHtml(
+                                task.priority ||
+                                "MEDIUM"
+                            )}
 
                         </div>
 
-                    `;
+                    </div>
 
+                    ${
+                        task.deadline
+                        ?
+                        `
+                        <div
+                            class="countdown"
+                            data-deadline="${escapeHtml(
+                                task.deadline
+                            )}"
+                        >
+                            ⏳ Calculating...
+                        </div>
+                        `
+                        :
+                        ""
+                    }
 
-                    container.appendChild(
-                        item
-                    );
+                    <div class="task-actions">
 
-                }
-            );
+                        <button
+                            onclick="completeTask(${task.id})"
+                        >
+                            ✅ Complete
+                        </button>
 
+                        <button
+                            onclick="editTask(${task.id})"
+                        >
+                            ✏️ Edit
+                        </button>
+
+                        <button
+                            onclick="deleteTask(${task.id})"
+                        >
+                            🗑️ Delete
+                        </button>
+
+                        <button
+                            onclick="snoozeTask(${task.id},10)"
+                        >
+                            😴 10m
+                        </button>
+
+                        <button
+                            onclick="snoozeTask(${task.id},30)"
+                        >
+                            😴 30m
+                        </button>
+
+                        <button
+                            onclick="snoozeTask(${task.id},60)"
+                        >
+                            😴 1h
+                        </button>
+
+                    </div>
+                `;
+
+                container.appendChild(item);
+
+            });
 
             updateCountdowns();
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             container.innerHTML =
                 "❌ Unable to load tasks.";
 
         }
-
     }
 
 
@@ -1670,33 +1562,22 @@
                     }
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             await response.json();
 
-
             await loadTasks();
-
             await loadDashboard();
-
             await loadHistory();
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
-
     }
 
 
@@ -1713,9 +1594,7 @@
         ) {
 
             return;
-
         }
-
 
         try {
 
@@ -1727,33 +1606,22 @@
                     }
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             await response.json();
 
-
             await loadTasks();
-
             await loadDashboard();
-
             await loadHistory();
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
-
     }
 
 
@@ -1769,13 +1637,10 @@
                     item.id === id
             );
 
-
         if (!task) {
 
             return;
-
         }
-
 
         const newTask =
             prompt(
@@ -1783,15 +1648,10 @@
                 task.task
             );
 
-
-        if (
-            newTask === null
-        ) {
+        if (newTask === null) {
 
             return;
-
         }
-
 
         const newDeadline =
             prompt(
@@ -1799,15 +1659,10 @@
                 task.deadline || ""
             );
 
-
-        if (
-            newDeadline === null
-        ) {
+        if (newDeadline === null) {
 
             return;
-
         }
-
 
         const newPriority =
             prompt(
@@ -1816,15 +1671,10 @@
                 "MEDIUM"
             );
 
-
-        if (
-            newPriority === null
-        ) {
+        if (newPriority === null) {
 
             return;
-
         }
-
 
         try {
 
@@ -1841,7 +1691,6 @@
 
                         body:
                             JSON.stringify({
-
                                 task:
                                     newTask,
 
@@ -1851,35 +1700,24 @@
                                 priority:
                                     newPriority
                                         .toUpperCase()
-
                             })
-
                     }
                 );
-
 
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 await loadTasks();
-
                 await loadDashboard();
 
-            }
-
-            else {
+            } else {
 
                 alert(
                     data.message ||
@@ -1888,16 +1726,11 @@
 
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
-
     }
 
 
@@ -1928,33 +1761,23 @@
                                 minutes:
                                     minutes
                             })
-
                     }
                 );
-
 
             if (!response) {
 
                 return;
-
             }
-
 
             await response.json();
 
-
             await loadTasks();
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
-
     }
 
 
@@ -1971,25 +1794,19 @@
                     "/tasks"
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
             allTasks =
                 data.tasks || [];
 
-
             const total =
                 allTasks.length;
-
 
             const completed =
                 allTasks.filter(
@@ -1997,42 +1814,32 @@
                         task.completed === 1
                 ).length;
 
-
             const pending =
                 total -
                 completed;
-
 
             document.getElementById(
                 "totalTasks"
             ).textContent =
                 total;
 
-
             document.getElementById(
                 "completedTasks"
             ).textContent =
                 completed;
-
 
             document.getElementById(
                 "pendingTasks"
             ).textContent =
                 pending;
 
-
             showNextTask();
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
-
     }
 
 
@@ -2047,13 +1854,11 @@
                 "nextTask"
             );
 
-
         const pending =
             allTasks.filter(
                 task =>
                     task.completed !== 1
             );
-
 
         if (
             pending.length === 0
@@ -2063,16 +1868,13 @@
                 "🎉 No pending tasks!";
 
             return;
-
         }
-
 
         const withDeadline =
             pending.filter(
                 task =>
                     task.deadline
             );
-
 
         if (
             withDeadline.length === 0
@@ -2084,9 +1886,7 @@
                 )}`;
 
             return;
-
         }
-
 
         withDeadline.sort(
             (a, b) =>
@@ -2098,10 +1898,8 @@
                 )
         );
 
-
         const next =
             withDeadline[0];
-
 
         container.innerHTML = `
 
@@ -2129,7 +1927,6 @@
             </strong>
 
         `;
-
     }
 
 
@@ -2144,10 +1941,8 @@
                 "dailyPlanResult"
             );
 
-
         result.textContent =
             "🤖 Gemini is analyzing your tasks...";
-
 
         try {
 
@@ -2156,29 +1951,21 @@
                     "/ai-daily-plan"
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 result.textContent =
                     data.plan ||
                     "No plan available.";
 
-            }
-
-            else {
+            } else {
 
                 result.textContent =
                     "❌ " +
@@ -2186,23 +1973,16 @@
                         data.message ||
                         "Unable to generate plan."
                     );
-
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             result.textContent =
                 "❌ Unable to connect to AI.";
 
         }
-
     }
 
 
@@ -2217,16 +1997,13 @@
                 "aiTaskInput"
             );
 
-
         const result =
             document.getElementById(
                 "aiTaskResult"
             );
 
-
         const task =
             input.value.trim();
-
 
         if (!task) {
 
@@ -2234,13 +2011,10 @@
                 "Please enter a task.";
 
             return;
-
         }
-
 
         result.textContent =
             "🤖 Gemini is analyzing your task...";
-
 
         try {
 
@@ -2260,32 +2034,23 @@
                                 task:
                                     task
                             })
-
                     }
                 );
-
 
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 result.textContent =
                     data.ai_response;
 
-            }
-
-            else {
+            } else {
 
                 result.textContent =
                     "❌ " +
@@ -2293,23 +2058,16 @@
                         data.message ||
                         "AI could not analyze task."
                     );
-
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             result.textContent =
                 "❌ Unable to connect to AI.";
 
         }
-
     }
 
 
@@ -2324,10 +2082,8 @@
                 "aiCoachResult"
             );
 
-
         result.textContent =
             "🧠 Gemini is reviewing your productivity...";
-
 
         try {
 
@@ -2339,28 +2095,20 @@
                     }
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 result.textContent =
                     data.coach;
 
-            }
-
-            else {
+            } else {
 
                 result.textContent =
                     "❌ " +
@@ -2368,23 +2116,16 @@
                         data.message ||
                         "AI coach unavailable."
                     );
-
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             result.textContent =
                 "❌ Unable to connect to AI.";
 
         }
-
     }
 
 
@@ -2399,10 +2140,8 @@
                 "insightsResult"
             );
 
-
         result.textContent =
             "📊 Analyzing productivity...";
-
 
         try {
 
@@ -2411,21 +2150,15 @@
                     "/productivity-insights"
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 result.textContent =
 
@@ -2450,9 +2183,7 @@ ${data.medium}
 🟢 Low Priority:
 ${data.low}`;
 
-            }
-
-            else {
+            } else {
 
                 result.textContent =
                     data.message ||
@@ -2460,20 +2191,14 @@ ${data.low}`;
 
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             result.textContent =
                 "❌ Unable to load insights.";
 
         }
-
     }
 
 
@@ -2488,10 +2213,8 @@ ${data.low}`;
                 "historyList"
             );
 
-
         container.innerHTML =
             "Loading history...";
-
 
         try {
 
@@ -2500,21 +2223,16 @@ ${data.low}`;
                     "/history"
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
             const history =
                 data.history || [];
-
 
             if (
                 history.length === 0
@@ -2524,105 +2242,89 @@ ${data.low}`;
                     "<p>No history available.</p>";
 
                 return;
-
             }
-
 
             container.innerHTML =
                 "";
 
+            history.forEach(item => {
 
-            history.forEach(
-                item => {
-
-                    const div =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    div.className =
-                        "history-item";
-
-
-                    div.innerHTML = `
-
-                        <strong>
-                            ${escapeHtml(
-                                item.task
-                            )}
-                        </strong>
-
-                        <br><br>
-
-                        Action:
-                        ${escapeHtml(
-                            item.action
-                        )}
-
-                        <br>
-
-                        Deadline:
-                        ${
-                            item.deadline
-                            ?
-                            formatDate(
-                                item.deadline
-                            )
-                            :
-                            "None"
-                        }
-
-                        <br>
-
-                        Priority:
-                        ${escapeHtml(
-                            item.priority ||
-                            "MEDIUM"
-                        )}
-
-                        <br>
-
-                        Time:
-                        ${formatDate(
-                            item.timestamp
-                        )}
-
-                        <div class="history-actions">
-
-                            <button
-                                class="danger-btn"
-                                onclick="deleteHistory(${item.id})"
-                            >
-                                🗑️ Delete
-                            </button>
-
-                        </div>
-
-                    `;
-
-
-                    container.appendChild(
-                        div
+                const div =
+                    document.createElement(
+                        "div"
                     );
 
-                }
-            );
+                div.className =
+                    "history-item";
 
-        }
+                div.innerHTML = `
 
-        catch (error) {
+                    <strong>
+                        ${escapeHtml(
+                            item.task
+                        )}
+                    </strong>
 
-            console.error(
-                error
-            );
+                    <br><br>
 
+                    Action:
+                    ${escapeHtml(
+                        item.action
+                    )}
+
+                    <br>
+
+                    Deadline:
+                    ${
+                        item.deadline
+                        ?
+                        formatDate(
+                            item.deadline
+                        )
+                        :
+                        "None"
+                    }
+
+                    <br>
+
+                    Priority:
+                    ${escapeHtml(
+                        item.priority ||
+                        "MEDIUM"
+                    )}
+
+                    <br>
+
+                    Time:
+                    ${formatDate(
+                        item.timestamp
+                    )}
+
+                    <div class="history-actions">
+
+                        <button
+                            class="danger-btn"
+                            onclick="deleteHistory(${item.id})"
+                        >
+                            🗑️ Delete
+                        </button>
+
+                    </div>
+
+                `;
+
+                container.appendChild(div);
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
 
             container.innerHTML =
                 "❌ Unable to load history.";
 
         }
-
     }
 
 
@@ -2642,29 +2344,20 @@ ${data.low}`;
                     }
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             await response.json();
 
-
             await loadHistory();
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
-
     }
 
 
@@ -2681,9 +2374,7 @@ ${data.low}`;
         ) {
 
             return;
-
         }
-
 
         try {
 
@@ -2695,59 +2386,41 @@ ${data.low}`;
                     }
                 );
 
-
             if (!response) {
 
                 return;
-
             }
-
 
             const data =
                 await response.json();
 
-
-            if (
-                data.success
-            ) {
+            if (data.success) {
 
                 alert(
                     "✅ All tasks cleared."
                 );
 
-
                 await loadHistory();
-
                 await loadDashboard();
-
                 await loadTasks();
 
-            }
-
-            else {
+            } else {
 
                 alert(
                     data.message ||
                     "Unable to clear tasks."
                 );
-
             }
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             alert(
                 "❌ Backend connection error."
             );
 
         }
-
     }
 
 
@@ -2761,7 +2434,6 @@ ${data.low}`;
             window.SpeechRecognition ||
             window.webkitSpeechRecognition;
 
-
         if (!SpeechRecognition) {
 
             alert(
@@ -2769,28 +2441,21 @@ ${data.low}`;
             );
 
             return;
-
         }
-
 
         const recognition =
             new SpeechRecognition();
 
-
         recognition.lang =
             "en-IN";
-
 
         recognition.interimResults =
             false;
 
-
         recognition.maxAlternatives =
             1;
 
-
         recognition.start();
-
 
         recognition.onresult =
             function(event) {
@@ -2800,24 +2465,20 @@ ${data.low}`;
                         .results[0][0]
                         .transcript;
 
-
                 document.getElementById(
                     "taskInput"
                 ).value =
                     transcript;
-
             };
-
 
         recognition.onerror =
             function(event) {
 
                 console.error(
+                    "Voice error:",
                     event.error
                 );
-
             };
-
     }
 
 
@@ -2831,83 +2492,70 @@ ${data.low}`;
             .querySelectorAll(
                 ".countdown"
             )
-            .forEach(
-                element => {
+            .forEach(element => {
 
-                    const deadline =
-                        new Date(
-                            element
-                                .dataset
-                                .deadline
-                        );
+                const deadline =
+                    new Date(
+                        element
+                            .dataset
+                            .deadline
+                    );
 
+                const now =
+                    new Date();
 
-                    const now =
-                        new Date();
+                const difference =
+                    deadline -
+                    now;
 
-
-                    const difference =
-                        deadline -
-                        now;
-
-
-                    if (
-                        difference <= 0
-                    ) {
-
-                        element.textContent =
-                            "⏰ Deadline reached";
-
-                        return;
-
-                    }
-
-
-                    const seconds =
-                        Math.floor(
-                            difference /
-                            1000
-                        );
-
-
-                    const days =
-                        Math.floor(
-                            seconds /
-                            86400
-                        );
-
-
-                    const hours =
-                        Math.floor(
-                            (
-                                seconds %
-                                86400
-                            ) /
-                            3600
-                        );
-
-
-                    const minutes =
-                        Math.floor(
-                            (
-                                seconds %
-                                3600
-                            ) /
-                            60
-                        );
-
-
-                    const sec =
-                        seconds %
-                        60;
-
+                if (
+                    difference <= 0
+                ) {
 
                     element.textContent =
-                        `⏳ ${days}d ${hours}h ${minutes}m ${sec}s remaining`;
+                        "⏰ Deadline reached";
 
+                    return;
                 }
-            );
 
+                const seconds =
+                    Math.floor(
+                        difference /
+                        1000
+                    );
+
+                const days =
+                    Math.floor(
+                        seconds /
+                        86400
+                    );
+
+                const hours =
+                    Math.floor(
+                        (
+                            seconds %
+                            86400
+                        ) /
+                        3600
+                    );
+
+                const minutes =
+                    Math.floor(
+                        (
+                            seconds %
+                            3600
+                        ) /
+                        60
+                    );
+
+                const sec =
+                    seconds %
+                    60;
+
+                element.textContent =
+                    `⏳ ${days}d ${hours}h ${minutes}m ${sec}s remaining`;
+
+            });
     }
 
 
@@ -2920,50 +2568,34 @@ ${data.low}`;
         if (!value) {
 
             return "None";
-
         }
 
-
         const date =
-            new Date(
-                value
-            );
-
+            new Date(value);
 
         if (
-            isNaN(
-                date
-            )
+            isNaN(date)
         ) {
 
             return value;
-
         }
-
 
         return date.toLocaleString(
             "en-IN",
             {
-                day:
-                    "numeric",
+                day: "numeric",
 
-                month:
-                    "short",
+                month: "short",
 
-                year:
-                    "numeric",
+                year: "numeric",
 
-                hour:
-                    "numeric",
+                hour: "numeric",
 
-                minute:
-                    "2-digit",
+                minute: "2-digit",
 
-                hour12:
-                    true
+                hour12: true
             }
         );
-
     }
 
 
@@ -2978,13 +2610,10 @@ ${data.low}`;
                 "div"
             );
 
-
         div.textContent =
             text ?? "";
 
-
         return div.innerHTML;
-
     }
 
 
@@ -2996,7 +2625,6 @@ ${data.low}`;
         updateCountdowns,
         1000
     );
-
 
     checkLogin();
 
