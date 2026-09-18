@@ -1236,67 +1236,32 @@
        LOGIN CHECK
     ===================================================== */
 
-    async function checkLogin() {
+   async function checkLogin() {
+    try {
+        const response = await apiFetch("/current-user");
 
-        try {
-
-            const response =
-                await apiFetch(
-                    "/current-user"
-                );
-
-
-            if (!response) {
-
-                return;
-
-            }
-
-
-            const data =
-                await response.json();
-
-
-            if (
-                data.logged_in === true &&
-                data.user
-            ) {
-
-                document.getElementById(
-                    "loggedUser"
-                ).textContent =
-                    data.user;
-
-
-                await loadDashboard();
-
-            }
-
-            else {
-
-                window.location.href =
-                    "auth.html";
-
-            }
-
+        if (!response) {
+            return;
         }
 
-        catch (error) {
+        const data = await response.json();
 
-            console.error(
-                "Login check error:",
-                error
-            );
+        if (data.logged_in === true && data.user) {
+            document.getElementById("loggedUser").textContent =
+                data.user.name;
 
-
-            document.getElementById(
-                "loggedUser"
-            ).textContent =
-                "Connection Error";
-
+            await loadDashboard();
+        } else {
+            window.location.href = "auth.html";
         }
 
+    } catch (error) {
+        console.error("Login check error:", error);
+
+        document.getElementById("loggedUser").textContent =
+            "Connection Error";
     }
+}
 
 
     /* =====================================================
