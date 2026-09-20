@@ -54,12 +54,15 @@ CORS(
     app,
     supports_credentials=True,
     origins=[
+        r"https://.*\.vercel\.app",
         "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        # Production Vercel deployments (including preview URLs)
-        r"https://.*\.vercel\.app"
+        "http://localhost:5500"
     ]
 )
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 
 # Render + Vercel are cross-site in production, so session cookies must
 # be Secure and SameSite=None. Keep local HTTP development working too.
