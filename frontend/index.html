@@ -649,6 +649,16 @@
 
             </div>
 
+            <div class="content-card" id="dashboardDeadlineCard">
+
+                <h3>⏰ Upcoming Deadline</h3>
+                <div id="dashboardDeadline" class="next-task">Loading deadline...</div>
+                <br>
+                <button class="secondary-btn" onclick="enableDeadlineNotifications()">🔔 Enable Deadline Notifications</button>
+                <p id="notificationStatus" style="margin-top:10px;font-size:13px;color:#647681;">Enable notifications to receive browser alerts while this dashboard is open.</p>
+
+            </div>
+
             <div class="content-card">
 
                 <h3>⚡ Quick Actions</h3>
@@ -1834,6 +1844,7 @@
                 pending;
 
             showNextTask();
+            updateDashboardDeadline();
 
         } catch (error) {
 
@@ -2596,6 +2607,75 @@ ${data.low}`;
 
 
     /* =====================================================
+       DASHBOARD DEADLINE + BROWSER NOTIFICATIONS
+    ===================================================== */
+
+    function enableDeadlineNotifications() {
+        const status = document.getElementById("notificationStatus");
+        if (!("Notification" in window)) {
+            status.textContent = "This browser does not support desktop notifications.";
+            return;
+        }
+        Notification.requestPermission().then(permission => {
+            status.textContent = permission === "granted"
+                ? "✅ Deadline notifications are enabled."
+                : "Notifications are blocked. Allow them in your browser site settings.";
+        });
+    }
+
+    function notifyDashboardDeadline(task, type, message) {
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+        const key = `deadline-${task.id || task.task}-${task.deadline}-${type}`;
+        try {
+            if (localStorage.getItem(key)) return;
+            localStorage.setItem(key, "sent");
+            new Notification("AI Productivity Agent — Deadline Reminder", {
+                body: `${task.task}: ${message}`
+            });
+        } catch (error) {
+            console.warn("Could not store notification state:", error);
+        }
+    }
+
+    function updateDashboardDeadline() {
+        const container = document.getElementById("dashboardDeadline");
+        if (!container) return;
+
+        const upcoming = allTasks
+            .filter(task => task.completed !== 1 && task.deadline)
+            .map(task => ({ ...task, deadlineDate: new Date(task.deadline) }))
+            .filter(task => !isNaN(task.deadlineDate.getTime()))
+            .sort((a, b) => a.deadlineDate - b.deadlineDate);
+
+        if (!upcoming.length) {
+            container.textContent = "No upcoming deadlines. Add a deadline to one of your tasks.";
+            return;
+        }
+
+        const task = upcoming[0];
+        const diff = task.deadlineDate.getTime() - Date.now();
+        const taskName = escapeHtml(task.task || "Untitled task");
+
+        if (diff <= 0) {
+            container.innerHTML = `<strong>${taskName}</strong><br>📅 ${formatDate(task.deadline)}<br><br>🔴 Deadline has passed`;
+            notifyDashboardDeadline(task, "reached", "Its deadline has passed. Please review it.");
+            return;
+        }
+
+        if (diff <= 15 * 60 * 1000) {
+            notifyDashboardDeadline(task, "15min", "The deadline is within 15 minutes.");
+        }
+
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        container.innerHTML = `<strong>${taskName}</strong><br>📅 ${formatDate(task.deadline)}<br><br>⏳ ${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+    }
+
+    /* =====================================================
        DATE FORMAT
     ===================================================== */
 
@@ -2681,10 +2761,11 @@ ${data.low}`;
        START APPLICATION
     ===================================================== */
 
-    setInterval(
-        updateCountdowns,
-        1000
-    );
+    setInterval(() => {
+        updateCountdowns();
+        updateDashboardDeadline();
+        updateGreeting();
+    }, 1000);
 
     updateGreeting();
     checkLogin();
