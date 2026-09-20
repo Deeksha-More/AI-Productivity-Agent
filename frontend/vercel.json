@@ -1,9 +1,11 @@
 {
+  "cleanUrls": false,
+  "trailingSlash": false,
   "redirects": [
     {
       "source": "/",
       "destination": "/auth.html",
-      "permanent": false
+      "permanent": true
     }
   ]
 }
