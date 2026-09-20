@@ -1,429 +1,275 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>AI Productivity Agent - Login</title>
+    <title>AI Productivity Agent | Login</title>
 
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
 
         body {
             min-height: 100vh;
-
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-
             display: flex;
             justify-content: center;
             align-items: center;
-
-            background:
-                linear-gradient(
-                    rgba(226, 238, 244, 0.55),
-                    rgba(244, 239, 232, 0.60)
-                ),
-                url("https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=85");
-
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
         }
 
-        .auth-container {
-            width: 420px;
-            max-width: 92%;
-
+        .container {
+            width: 100%;
+            max-width: 430px;
+            background: #ffffff;
             padding: 35px;
-
-            border-radius: 25px;
-
-            background: rgba(255, 255, 255, 0.78);
-
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-
-            box-shadow:
-                0 20px 50px rgba(0, 0, 0, 0.15);
-
-            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         }
 
-        .logo {
+        .header {
             text-align: center;
-            font-size: 48px;
-            margin-bottom: 8px;
+            margin-bottom: 25px;
         }
 
-        h1 {
-            text-align: center;
+        .header h1 {
+            color: #5b4bdb;
             font-size: 27px;
-            color: #243746;
             margin-bottom: 8px;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #667781;
+        .header p {
+            color: #777;
             font-size: 14px;
-            margin-bottom: 28px;
         }
 
         .form-title {
-            font-size: 21px;
-            color: #243746;
-            margin-bottom: 18px;
+            text-align: center;
+            font-size: 22px;
+            color: #222;
+            margin-bottom: 22px;
         }
 
-        .input-group {
-            margin-bottom: 15px;
+        .form-group {
+            margin-bottom: 16px;
         }
 
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 7px;
-
-            color: #344955;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: bold;
+            color: #333;
         }
 
-        input {
+        .form-group input {
             width: 100%;
-
-            padding: 13px 15px;
-
-            border: 1px solid rgba(100, 120, 130, 0.25);
-
-            border-radius: 12px;
-
-            background: rgba(255, 255, 255, 0.85);
-
-            outline: none;
-
-            font-size: 14px;
-
-            transition: 0.2s;
-        }
-
-        input:focus {
-            border-color: #6d9ca8;
-
-            box-shadow:
-                0 0 0 3px rgba(109, 156, 168, 0.15);
-        }
-
-        .auth-button {
-            width: 100%;
-
-            border: none;
-
-            padding: 14px;
-
-            border-radius: 13px;
-
-            background: #5d8791;
-
-            color: white;
-
+            padding: 13px;
+            border: 1px solid #d5d5d5;
+            border-radius: 8px;
             font-size: 15px;
-            font-weight: 600;
-
-            cursor: pointer;
-
-            margin-top: 5px;
-
-            transition: 0.2s;
+            outline: none;
         }
 
-        .auth-button:hover {
-            background: #4d747d;
+        .form-group input:focus {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.12);
+        }
 
-            transform: translateY(-1px);
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 8px;
+            background: #6c5ce7;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #5848d5;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
         }
 
         .switch-text {
-            text-align: center;
-
             margin-top: 20px;
-
-            color: #667781;
-
+            text-align: center;
+            color: #666;
             font-size: 14px;
         }
 
-        .switch-button {
+        .switch-text button {
             border: none;
-
             background: none;
-
-            color: #4d7e89;
-
-            font-weight: 700;
-
+            color: #6c5ce7;
+            font-weight: bold;
             cursor: pointer;
-
             font-size: 14px;
         }
 
         .message {
             display: none;
-
+            padding: 11px;
             margin-bottom: 15px;
-
-            padding: 11px 13px;
-
-            border-radius: 10px;
-
-            font-size: 13px;
-
-            text-align: center;
-        }
-
-        .message.success {
-            display: block;
-
-            background: rgba(80, 160, 100, 0.15);
-
-            color: #286438;
+            border-radius: 7px;
+            font-size: 14px;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .message.error {
             display: block;
-
-            background: rgba(200, 70, 70, 0.13);
-
-            color: #8a3030;
+            background: #ffe8e8;
+            color: #b42318;
         }
 
-        #signupForm {
-            display: none;
+        .message.success {
+            display: block;
+            background: #e5f8ec;
+            color: #187a3e;
         }
 
         .footer {
-            text-align: center;
-
             margin-top: 25px;
-
-            color: #7b898f;
-
-            font-size: 11px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
         }
 
-        @media (max-width: 500px) {
-            .auth-container {
-                padding: 25px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="auth-container">
+    <div class="container">
 
-        <div class="logo">
-            🤖
+        <div class="header">
+            <h1>🤖 AI Productivity Agent</h1>
+            <p>Your personal smart productivity assistant</p>
         </div>
 
-        <h1>
-            AI Productivity Agent
-        </h1>
+        <!-- LOGIN FORM -->
+        <form id="loginForm">
 
-        <p class="subtitle">
-            Your personal smart productivity assistant
-        </p>
+            <h2 class="form-title">Welcome Back 👋</h2>
 
+            <div id="loginMessage" class="message"></div>
 
-        <!-- ================================================= -->
-        <!-- LOGIN -->
-        <!-- ================================================= -->
-
-        <div id="loginForm">
-
-            <h2 class="form-title">
-                Welcome Back 👋
-            </h2>
-
-            <div
-                id="loginMessage"
-                class="message">
-            </div>
-
-            <div class="input-group">
-
-                <label for="loginEmail">
-                    Email
-                </label>
-
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
                 <input
                     type="email"
                     id="loginEmail"
                     placeholder="Enter your email"
                     autocomplete="email"
+                    required
                 >
-
             </div>
 
-
-            <div class="input-group">
-
-                <label for="loginPassword">
-                    Password
-                </label>
-
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
                 <input
                     type="password"
                     id="loginPassword"
                     placeholder="Enter your password"
                     autocomplete="current-password"
+                    required
                 >
-
             </div>
 
-
-            <button
-                class="auth-button"
-                onclick="loginUser()">
-
+            <button type="submit" id="loginBtn" class="submit-btn">
                 🔐 Login
-
             </button>
 
-
             <p class="switch-text">
-
                 Don't have an account?
-
-                <button
-                    class="switch-button"
-                    onclick="showSignup()">
-
+                <button type="button" id="showSignup">
                     Create Account
-
                 </button>
-
             </p>
 
-        </div>
+        </form>
 
+        <!-- SIGNUP FORM -->
+        <form id="signupForm" class="hidden">
 
-        <!-- ================================================= -->
-        <!-- SIGNUP -->
-        <!-- ================================================= -->
+            <h2 class="form-title">Create Account ✨</h2>
 
-        <div id="signupForm">
+            <div id="signupMessage" class="message"></div>
 
-            <h2 class="form-title">
-                Create Account ✨
-            </h2>
-
-            <div
-                id="signupMessage"
-                class="message">
-            </div>
-
-
-            <div class="input-group">
-
-                <label for="signupName">
-                    Full Name
-                </label>
-
+            <div class="form-group">
+                <label for="signupName">Full Name</label>
                 <input
                     type="text"
                     id="signupName"
-                    placeholder="Enter your name"
+                    placeholder="Enter your full name"
                     autocomplete="name"
+                    required
                 >
-
             </div>
 
-
-            <div class="input-group">
-
-                <label for="signupEmail">
-                    Email
-                </label>
-
+            <div class="form-group">
+                <label for="signupEmail">Email</label>
                 <input
                     type="email"
                     id="signupEmail"
                     placeholder="Enter your email"
                     autocomplete="email"
+                    required
                 >
-
             </div>
 
-
-            <div class="input-group">
-
-                <label for="signupPassword">
-                    Password
-                </label>
-
+            <div class="form-group">
+                <label for="signupPassword">Password</label>
                 <input
                     type="password"
                     id="signupPassword"
-                    placeholder="Minimum 6 characters"
+                    placeholder="Create a password (minimum 6 characters)"
                     autocomplete="new-password"
+                    minlength="6"
+                    required
                 >
-
             </div>
 
-
-            <div class="input-group">
-
-                <label for="signupConfirmPassword">
-                    Confirm Password
-                </label>
-
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
                 <input
                     type="password"
-                    id="signupConfirmPassword"
-                    placeholder="Enter password again"
+                    id="confirmPassword"
+                    placeholder="Confirm your password"
                     autocomplete="new-password"
+                    minlength="6"
+                    required
                 >
-
             </div>
 
-
-            <button
-                class="auth-button"
-                onclick="signupUser()">
-
+            <button type="submit" id="signupBtn" class="submit-btn">
                 ✨ Create Account
-
             </button>
 
-
             <p class="switch-text">
-
                 Already have an account?
-
-                <button
-                    class="switch-button"
-                    onclick="showLogin()">
-
+                <button type="button" id="showLogin">
                     Login
-
                 </button>
-
             </p>
 
-        </div>
-
+        </form>
 
         <div class="footer">
             Secure multi-user productivity system
@@ -431,172 +277,113 @@
 
     </div>
 
-
     <script>
+        // RENDER BACKEND URL
+        const API_URL = "https://ai-productivity-agent.onrender.com";
 
-        /* =====================================================
-           RENDER BACKEND
-           ===================================================== */
+        const loginForm = document.getElementById("loginForm");
+        const signupForm = document.getElementById("signupForm");
 
-        const API_URL =
-            "https://ai-productivity-agent.onrender.com";
+        const loginBtn = document.getElementById("loginBtn");
+        const signupBtn = document.getElementById("signupBtn");
 
+        // SHOW MESSAGE
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
 
-        /* =====================================================
-           SHOW LOGIN
-           ===================================================== */
-
-        function showLogin() {
-
-            document.getElementById(
-                "loginForm"
-            ).style.display = "block";
-
-            document.getElementById(
-                "signupForm"
-            ).style.display = "none";
-
-            clearMessages();
+            element.textContent = message;
+            element.className = "message " + type;
         }
 
+        // CLEAR MESSAGE
+        function clearMessage(elementId) {
+            const element = document.getElementById(elementId);
 
-        /* =====================================================
-           SHOW SIGNUP
-           ===================================================== */
-
-        function showSignup() {
-
-            document.getElementById(
-                "loginForm"
-            ).style.display = "none";
-
-            document.getElementById(
-                "signupForm"
-            ).style.display = "block";
-
-            clearMessages();
+            element.textContent = "";
+            element.className = "message";
         }
 
+        // SWITCH TO SIGNUP
+        document.getElementById("showSignup").addEventListener("click", function () {
+            loginForm.classList.add("hidden");
+            signupForm.classList.remove("hidden");
 
-        /* =====================================================
-           CLEAR MESSAGES
-           ===================================================== */
+            clearMessage("loginMessage");
+            clearMessage("signupMessage");
+        });
 
-        function clearMessages() {
+        // SWITCH TO LOGIN
+        document.getElementById("showLogin").addEventListener("click", function () {
+            signupForm.classList.add("hidden");
+            loginForm.classList.remove("hidden");
 
-            const messages = [
-                "loginMessage",
-                "signupMessage"
-            ];
+            clearMessage("loginMessage");
+            clearMessage("signupMessage");
+        });
 
-            messages.forEach(id => {
+        // BACKEND REQUEST HELPER
+        async function sendRequest(endpoint, payload) {
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                method: "POST",
 
-                const element =
-                    document.getElementById(id);
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-                element.textContent = "";
+                credentials: "include",
 
-                element.className =
-                    "message";
-
+                body: JSON.stringify(payload)
             });
-        }
 
+            // Read response safely
+            const responseText = await response.text();
 
-        /* =====================================================
-           SHOW MESSAGE
-           ===================================================== */
-
-        function showMessage(
-            elementId,
-            message,
-            type
-        ) {
-
-            const element =
-                document.getElementById(
-                    elementId
-                );
-
-            element.textContent =
-                message;
-
-            element.className =
-                "message " + type;
-        }
-
-
-        /* =====================================================
-           LOGIN
-           ===================================================== */
-
-        async function loginUser() {
-
-            const email =
-                document.getElementById(
-                    "loginEmail"
-                ).value.trim();
-
-            const password =
-                document.getElementById(
-                    "loginPassword"
-                ).value;
-
-
-            if (!email || !password) {
-
-                showMessage(
-                    "loginMessage",
-                    "Please enter email and password.",
-                    "error"
-                );
-
-                return;
-            }
-
+            let data;
 
             try {
+                data = JSON.parse(responseText);
+            } catch {
+                throw new Error(
+                    "The backend returned an invalid response. Please try again."
+                );
+            }
 
-                const response =
-                    await fetch(
-                        `${API_URL}/login`,
-                        {
-                            method: "POST",
+            return {
+                response: response,
+                data: data
+            };
+        }
 
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
+        // LOGIN
+        loginForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
 
-                            credentials: "include",
+            clearMessage("loginMessage");
 
-                            body: JSON.stringify({
-                                email: email,
-                                password: password
-                            })
-                        }
-                    );
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
 
+            loginBtn.disabled = true;
+            loginBtn.textContent = "Logging in...";
 
-                const data =
-                    await response.json();
+            try {
+                const result = await sendRequest("/login", {
+                    email: email,
+                    password: password
+                });
 
+                const response = result.response;
+                const data = result.data;
 
-                if (
-                    !response.ok ||
-                    !data.success
-                ) {
-
+                if (!response.ok || !data.success) {
                     showMessage(
                         "loginMessage",
-                        data.message ||
-                        "Login failed.",
+                        data.message || "Login failed. Please check your details.",
                         "error"
                     );
 
                     return;
                 }
-
 
                 showMessage(
                     "loginMessage",
@@ -604,214 +391,102 @@
                     "success"
                 );
 
+                setTimeout(function () {
+                    window.location.href = "index.html";
+                }, 700);
 
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            "index.html";
-
-                    },
-                    700
-                );
-
-            }
-
-
-            catch (error) {
+            } catch (error) {
+                console.error("Login error:", error);
 
                 showMessage(
                     "loginMessage",
-                    "Unable to connect to the backend. Please check the Render service.",
+                    "Unable to connect to the backend. Please check the Render service or try again.",
                     "error"
                 );
 
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = "🔐 Login";
             }
-        }
+        });
 
+        // SIGNUP
+        signupForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
 
-        /* =====================================================
-           SIGNUP
-           ===================================================== */
+            clearMessage("signupMessage");
 
-        async function signupUser() {
-
-            const name =
-                document.getElementById(
-                    "signupName"
-                ).value.trim();
-
-            const email =
-                document.getElementById(
-                    "signupEmail"
-                ).value.trim();
-
-            const password =
-                document.getElementById(
-                    "signupPassword"
-                ).value;
-
-            const confirmPassword =
-                document.getElementById(
-                    "signupConfirmPassword"
-                ).value;
-
-
-            if (
-                !name ||
-                !email ||
-                !password ||
-                !confirmPassword
-            ) {
-
-                showMessage(
-                    "signupMessage",
-                    "Please fill in all fields.",
-                    "error"
-                );
-
-                return;
-            }
-
+            const name = document.getElementById("signupName").value.trim();
+            const email = document.getElementById("signupEmail").value.trim();
+            const password = document.getElementById("signupPassword").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
 
             if (password.length < 6) {
-
                 showMessage(
                     "signupMessage",
                     "Password must contain at least 6 characters.",
                     "error"
                 );
-
                 return;
             }
 
-
-            if (
-                password !==
-                confirmPassword
-            ) {
-
+            if (password !== confirmPassword) {
                 showMessage(
                     "signupMessage",
                     "Passwords do not match.",
                     "error"
                 );
-
                 return;
             }
 
+            signupBtn.disabled = true;
+            signupBtn.textContent = "Creating account...";
 
             try {
+                const result = await sendRequest("/signup", {
+                    name: name,
+                    email: email,
+                    password: password
+                });
 
-                const response =
-                    await fetch(
-                        `${API_URL}/signup`,
-                        {
-                            method: "POST",
+                const response = result.response;
+                const data = result.data;
 
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            credentials: "include",
-
-                            body: JSON.stringify({
-                                name: name,
-                                email: email,
-                                password: password
-                            })
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (
-                    !response.ok ||
-                    !data.success
-                ) {
-
+                if (!response.ok || !data.success) {
                     showMessage(
                         "signupMessage",
-                        data.message ||
-                        "Account creation failed.",
+                        data.message || "Account creation failed. Please try again.",
                         "error"
                     );
 
                     return;
                 }
 
-
                 showMessage(
                     "signupMessage",
-                    "Account created! Opening dashboard...",
+                    "Account created successfully! Opening dashboard...",
                     "success"
                 );
 
+                // Backend signup automatically logs in the new user
+                setTimeout(function () {
+                    window.location.href = "index.html";
+                }, 700);
 
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            "index.html";
-
-                    },
-                    700
-                );
-
-            }
-
-
-            catch (error) {
+            } catch (error) {
+                console.error("Signup error:", error);
 
                 showMessage(
                     "signupMessage",
-                    "Unable to connect to the backend. Please check the Render service.",
+                    "Unable to connect to the backend. Please check the Render service or try again.",
                     "error"
                 );
 
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.textContent = "✨ Create Account";
             }
-        }
-
-
-        /* =====================================================
-           ENTER KEY SUPPORT
-           ===================================================== */
-
-        document.addEventListener(
-            "keydown",
-            function(event) {
-
-                if (
-                    event.key === "Enter"
-                ) {
-
-                    const loginVisible =
-                        document.getElementById(
-                            "loginForm"
-                        ).style.display !== "none";
-
-
-                    if (loginVisible) {
-
-                        loginUser();
-
-                    }
-
-                    else {
-
-                        signupUser();
-
-                    }
-
-                }
-
-            }
-        );
-
+        });
     </script>
 
 </body>
