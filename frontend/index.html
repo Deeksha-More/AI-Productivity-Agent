@@ -964,10 +964,10 @@
             <div class="content-card">
 
                 <button
-                    class="danger-btn"
-                    onclick="clearAllTasks()"
-                >
-                    🗑️ Clear All Tasks
+                     class="danger-btn"
+                     onclick="clearAllHistory()"
+>
+                    🗑️ Clear All History
                 </button>
 
                 <br><br>
@@ -2372,68 +2372,49 @@ ${data.low}`;
     }
 
 
-    /* =====================================================
-       CLEAR ALL TASKS
-    ===================================================== */
+   // =====================================================
+// CLEAR ALL HISTORY
+// =====================================================
 
-    async function clearAllTasks() {
+async function clearAllHistory() {
 
-        if (
-            !confirm(
-                "Are you sure you want to clear all tasks?"
-            )
-        ) {
+    const confirmed = confirm(
+        "Are you sure you want to permanently delete all history?"
+    );
 
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await apiFetch(
+            "/clear-history",
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (!response) {
             return;
         }
 
-        try {
+        const data = await response.json();
 
-            const response =
-                await apiFetch(
-                    "/clear-tasks",
-                    {
-                        method: "DELETE"
-                    }
-                );
-
-            if (!response) {
-
-                return;
-            }
-
-            const data =
-                await response.json();
-
-            if (data.success) {
-
-                alert(
-                    "✅ All tasks cleared."
-                );
-
-                await loadHistory();
-                await loadDashboard();
-                await loadTasks();
-
-            } else {
-
-                alert(
-                    data.message ||
-                    "Unable to clear tasks."
-                );
-            }
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(
-                "❌ Backend connection error."
-            );
-
+        if (!response.ok || !data.success) {
+            alert(data.message || "Unable to clear history.");
+            return;
         }
-    }
 
+        await loadHistory();
+
+        alert("✅ All history cleared successfully!");
+
+    } catch (error) {
+        console.error("Clear history error:", error);
+
+        alert("❌ Unable to connect to the backend.");
+    }
+}
 
     /* =====================================================
        VOICE INPUT
