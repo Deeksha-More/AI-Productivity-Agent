@@ -585,7 +585,7 @@
 
             <div class="page-title">
 
-                <h2>Welcome Back 👋</h2>
+                <h2 id="welcomeGreeting">Welcome Back 👋</h2>
 
                 <p>
                     Manage your tasks with the help of AI.
@@ -2486,6 +2486,25 @@ ${data.low}`;
        COUNTDOWN
     ===================================================== */
 
+    // Send each deadline reminder only once per browser tab session.
+    function sendDeadlineReminder(element, reminderType, message) {
+        const reminderKey =
+            `${element.dataset.deadline}-${reminderType}`;
+
+        if (sessionStorage.getItem(reminderKey)) {
+            return;
+        }
+
+        sessionStorage.setItem(reminderKey, "sent");
+
+        // Browser notifications appear only if the user has already allowed them.
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("AI Productivity Agent — Task Deadline", {
+                body: message
+            });
+        }
+    }
+
     function updateCountdowns() {
 
         document
@@ -2508,14 +2527,31 @@ ${data.low}`;
                     deadline -
                     now;
 
-                if (
-                    difference <= 0
-                ) {
+                if (isNaN(deadline.getTime())) {
+                    element.textContent = "⚠️ Invalid deadline";
+                    return;
+                }
 
+                if (difference <= 0) {
                     element.textContent =
                         "⏰ Deadline reached";
 
+                    sendDeadlineReminder(
+                        element,
+                        "reached",
+                        "A task deadline has been reached. Check your dashboard."
+                    );
+
                     return;
+                }
+
+                // Notify once when a task is 15 minutes or less from its deadline.
+                if (difference <= 15 * 60 * 1000) {
+                    sendDeadlineReminder(
+                        element,
+                        "15min",
+                        "A task deadline is approaching within 15 minutes."
+                    );
                 }
 
                 const seconds =
@@ -2618,6 +2654,30 @@ ${data.low}`;
 
 
     /* =====================================================
+       TIME-BASED WELCOME GREETING
+    ===================================================== */
+
+    function updateGreeting() {
+        const hour = new Date().getHours();
+        let greeting;
+
+        if (hour >= 5 && hour < 12) {
+            greeting = "Good Morning ☀️";
+        } else if (hour >= 12 && hour < 17) {
+            greeting = "Good Afternoon 🌤️";
+        } else if (hour >= 17 && hour < 21) {
+            greeting = "Good Evening 🌆";
+        } else {
+            greeting = "Good Night 🌙";
+        }
+
+        const greetingElement = document.getElementById("welcomeGreeting");
+        if (greetingElement) {
+            greetingElement.textContent = greeting + ", Welcome Back 👋";
+        }
+    }
+
+    /* =====================================================
        START APPLICATION
     ===================================================== */
 
@@ -2626,6 +2686,7 @@ ${data.low}`;
         1000
     );
 
+    updateGreeting();
     checkLogin();
 
 </script>
