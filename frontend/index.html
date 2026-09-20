@@ -964,10 +964,10 @@
             <div class="content-card">
 
                 <button
-                     class="danger-btn"
-                     onclick="clearAllHistory()"
->
-                    🗑️ Clear All History
+                    class="danger-btn"
+                    onclick="clearAllTasks()"
+                >
+                    🗑️ Clear All Tasks
                 </button>
 
                 <br><br>
@@ -2372,49 +2372,68 @@ ${data.low}`;
     }
 
 
-   // =====================================================
-// CLEAR ALL HISTORY
-// =====================================================
+    /* =====================================================
+       CLEAR ALL TASKS
+    ===================================================== */
 
-async function clearAllHistory() {
+    async function clearAllTasks() {
 
-    const confirmed = confirm(
-        "Are you sure you want to permanently delete all history?"
-    );
+        if (
+            !confirm(
+                "Are you sure you want to clear all tasks?"
+            )
+        ) {
 
-    if (!confirmed) {
-        return;
-    }
+            return;
+        }
 
-    try {
-        const response = await apiFetch(
-            "/clear-history",
-            {
-                method: "DELETE"
+        try {
+
+            const response =
+                await apiFetch(
+                    "/clear-tasks",
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+            if (!response) {
+
+                return;
             }
-        );
 
-        if (!response) {
-            return;
+            const data =
+                await response.json();
+
+            if (data.success) {
+
+                alert(
+                    "✅ All tasks cleared."
+                );
+
+                await loadHistory();
+                await loadDashboard();
+                await loadTasks();
+
+            } else {
+
+                alert(
+                    data.message ||
+                    "Unable to clear tasks."
+                );
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                "❌ Backend connection error."
+            );
+
         }
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            alert(data.message || "Unable to clear history.");
-            return;
-        }
-
-        await loadHistory();
-
-        alert("✅ All history cleared successfully!");
-
-    } catch (error) {
-        console.error("Clear history error:", error);
-
-        alert("❌ Unable to connect to the backend.");
     }
-}
+
 
     /* =====================================================
        VOICE INPUT
@@ -2497,94 +2516,81 @@ async function clearAllHistory() {
         }
     }
 
-    function updateCountdowns() {
+   function updateCountdowns() {
+    document.querySelectorAll(".countdown").forEach(element => {
+        const deadline = new Date(element.dataset.deadline);
+        const now = new Date();
 
-        document
-            .querySelectorAll(
-                ".countdown"
-            )
-            .forEach(element => {
+        if (isNaN(deadline.getTime())) {
+            element.textContent = "⚠️ Invalid deadline";
+            return;
+        }
 
-                const deadline =
-                    new Date(
-                        element
-                            .dataset
-                            .deadline
-                    );
+        const difference = deadline.getTime() - now.getTime();
 
-                const now =
-                    new Date();
+        // Deadline has passed
+        if (difference <= 0) {
+            const overdue = Math.abs(difference);
 
-                const difference =
-                    deadline -
-                    now;
+            const days = Math.floor(overdue / 86400000);
+            const hours = Math.floor((overdue % 86400000) / 3600000);
+            const minutes = Math.floor((overdue % 3600000) / 60000);
 
-                if (isNaN(deadline.getTime())) {
-                    element.textContent = "⚠️ Invalid deadline";
-                    return;
-                }
+            // Check whether the deadline's calendar date is before today
+            const deadlineDay = new Date(
+                deadline.getFullYear(),
+                deadline.getMonth(),
+                deadline.getDate()
+            );
 
-                if (difference <= 0) {
-                    element.textContent =
-                        "⏰ Deadline reached";
+            const today = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate()
+            );
 
-                    sendDeadlineReminder(
-                        element,
-                        "reached",
-                        "A task deadline has been reached. Check your dashboard."
-                    );
+            const message = deadlineDay < today
+                ? `⛔ DATE HAS PASSED — overdue by ${days}d ${hours}h ${minutes}m`
+                : `⛔ TIME IS OVER — overdue by ${hours + days * 24}h ${minutes}m`;
 
-                    return;
-                }
+            element.textContent = message;
+            element.style.color = "#dc2626";
+            element.style.fontWeight = "bold";
 
-                // Notify once when a task is 15 minutes or less from its deadline.
-                if (difference <= 15 * 60 * 1000) {
-                    sendDeadlineReminder(
-                        element,
-                        "15min",
-                        "A task deadline is approaching within 15 minutes."
-                    );
-                }
+            if (typeof sendDeadlineReminder === "function") {
+                sendDeadlineReminder(
+                    element,
+                    "overdue",
+                    "A task deadline has passed. Please check your task."
+                );
+            }
 
-                const seconds =
-                    Math.floor(
-                        difference /
-                        1000
-                    );
+            return;
+        }
 
-                const days =
-                    Math.floor(
-                        seconds /
-                        86400
-                    );
+        // Deadline is still in the future
+        const days = Math.floor(difference / 86400000);
+        const hours = Math.floor((difference % 86400000) / 3600000);
+        const minutes = Math.floor((difference % 3600000) / 60000);
+        const seconds = Math.floor((difference % 60000) / 1000);
 
-                const hours =
-                    Math.floor(
-                        (
-                            seconds %
-                            86400
-                        ) /
-                        3600
-                    );
+        element.textContent =
+            `⏳ ${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
 
-                const minutes =
-                    Math.floor(
-                        (
-                            seconds %
-                            3600
-                        ) /
-                        60
-                    );
+        element.style.color = "#2563eb";
+        element.style.fontWeight = "bold";
 
-                const sec =
-                    seconds %
-                    60;
-
-                element.textContent =
-                    `⏳ ${days}d ${hours}h ${minutes}m ${sec}s remaining`;
-
-            });
-    }
+        // Notify once when deadline is within 15 minutes
+        if (difference <= 15 * 60 * 1000 &&
+            typeof sendDeadlineReminder === "function") {
+            sendDeadlineReminder(
+                element,
+                "15min",
+                "A task deadline is approaching within 15 minutes."
+            );
+        }
+    });
+}
 
 
     /* =====================================================

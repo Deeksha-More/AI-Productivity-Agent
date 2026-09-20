@@ -25,46 +25,21 @@ except ImportError:
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 FLASK_SECRET_KEY = os.getenv(
     "FLASK_SECRET_KEY",
-    "ai_productivity_agent_secret_2026_deeksha"
+    "ai_productivity_agent_secret_2026"
 )
 
-FRONTEND_URL = os.getenv(
-    "FRONTEND_URL",
-    "https://ai-productivity-agent-b4hg2895q-deeksha-more.vercel.app"
-).strip().rstrip("/")
-
-
-# =========================================================
-# GEMINI AI
-# =========================================================
-
 if not GEMINI_API_KEY:
-
-    print("⚠️ GEMINI_API_KEY not found.")
-
+    print("⚠️ GEMINI_API_KEY not found in .env")
     gemini_client = None
-
 else:
-
     try:
-
-        gemini_client = genai.Client(
-            api_key=GEMINI_API_KEY
-        )
-
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
         print("✅ Gemini AI connected!")
-
     except Exception as error:
-
         gemini_client = None
-
-        print(
-            "❌ Gemini connection failed:",
-            error
-        )
+        print("❌ Gemini connection failed:", error)
 
 
 # =========================================================
@@ -75,79 +50,44 @@ app = Flask(__name__)
 
 app.secret_key = FLASK_SECRET_KEY
 
-
-# =========================================================
-# CORS
-# =========================================================
-
-cors_origins = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    FRONTEND_URL
-]
-
-cors_origins = list(
-    dict.fromkeys(
-        origin.rstrip("/")
-        for origin in cors_origins
-        if origin
-    )
-)
-
 CORS(
     app,
     supports_credentials=True,
-    origins=cors_origins
+    origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        # Production Vercel deployments (including preview URLs)
+        r"https://.*\.vercel\.app"
+    ]
 )
 
-
-# =========================================================
-# SESSION CONFIGURATION
-# =========================================================
-
-# Required because frontend is on Vercel
-# and backend is on Render.
-
-app.config["SESSION_COOKIE_NAME"] = "ai_productivity_session"
+# Render + Vercel are cross-site in production, so session cookies must
+# be Secure and SameSite=None. Keep local HTTP development working too.
+IS_PRODUCTION = bool(os.getenv("RENDER")) or os.getenv(
+    "RENDER_EXTERNAL_URL", ""
+).startswith("https://")
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
-
-app.config["SESSION_COOKIE_SECURE"] = True
-
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-
-app.config["SESSION_COOKIE_PATH"] = "/"
-
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
-    days=7
-)
+app.config["SESSION_COOKIE_SAMESITE"] = "None" if IS_PRODUCTION else "Lax"
+app.config["SESSION_COOKIE_SECURE"] = IS_PRODUCTION
 
 
 # =========================================================
 # DATABASE
 # =========================================================
 
-DATABASE = os.getenv(
-    "DATABASE_PATH",
-    "ai_assistant.db"
-)
+DATABASE = "ai_assistant.db"
 
 
 def get_connection():
-
-    connection = sqlite3.connect(
-        DATABASE
-    )
-
+    connection = sqlite3.connect(DATABASE)
     connection.row_factory = sqlite3.Row
-
     return connection
 
 
 def create_tables():
 
     connection = get_connection()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -194,13 +134,9 @@ def create_tables():
     """)
 
     connection.commit()
-
     connection.close()
 
     print("✅ Database ready!")
-
-
-create_tables()
 
 
 # =========================================================
@@ -211,18 +147,9 @@ create_tables()
 def home():
 
     return jsonify({
-
         "system": "AI Productivity Agent",
-
         "status": "Online",
-
-        "ai": (
-            "Gemini Connected"
-            if gemini_client
-            else
-            "Gemini Not Connected"
-        )
-
+        "ai": "Gemini Connected" if gemini_client else "Gemini Not Connected"
     })
 
 
@@ -234,20 +161,10 @@ def home():
 def health():
 
     return jsonify({
-
         "system": "AI Productivity Agent",
-
         "status": "Online",
-
         "database": "Connected",
-
-        "gemini": (
-            "Connected"
-            if gemini_client
-            else
-            "Not Connected"
-        )
-
+        "gemini": "Connected" if gemini_client else "Not Connected"
     })
 
 
@@ -255,67 +172,35 @@ def health():
 # SIGNUP
 # =========================================================
 
-@app.route(
-    "/signup",
-    methods=["POST"]
-)
+@app.route("/signup", methods=["POST"])
 def signup():
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    data = request.get_json()
 
-    name = data.get(
-        "name",
-        ""
-    ).strip()
-
-    email = data.get(
-        "email",
-        ""
-    ).strip().lower()
-
-    password = data.get(
-        "password",
-        ""
-    )
-
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
     if not name or not email or not password:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "All fields are required."
-
+            "message": "All fields are required."
         }), 400
-
 
     if len(password) < 6:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Password must contain at least 6 characters."
-
+            "message": "Password must contain at least 6 characters."
         }), 400
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     try:
 
-        password_hash = generate_password_hash(
-            password
-        )
-
+        password_hash = generate_password_hash(password)
 
         cursor.execute("""
             INSERT INTO users
@@ -327,55 +212,30 @@ def signup():
             password_hash
         ))
 
-
         connection.commit()
-
 
         user_id = cursor.lastrowid
 
-
-        session.clear()
-
-        session.permanent = True
-
         session["user_id"] = user_id
-
         session["user_name"] = name
-
         session["user_email"] = email
 
-
         return jsonify({
-
             "success": True,
-
-            "message":
-            "Account created successfully!",
-
+            "message": "Account created successfully!",
             "user": {
-
                 "id": user_id,
-
                 "name": name,
-
                 "email": email
-
             }
-
         })
-
 
     except sqlite3.IntegrityError:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Email already registered."
-
+            "message": "Email already registered."
         }), 409
-
 
     finally:
 
@@ -386,71 +246,33 @@ def signup():
 # LOGIN
 # =========================================================
 
-@app.route(
-    "/login",
-    methods=["POST"]
-)
+@app.route("/login", methods=["POST"])
 def login():
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    data = request.get_json()
 
-
-    email = data.get(
-        "email",
-        ""
-    ).strip().lower()
-
-    password = data.get(
-        "password",
-        ""
-    )
-
-
-    if not email or not password:
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-            "Email and password are required."
-
-        }), 400
-
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
 
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT *
         FROM users
         WHERE email = ?
-    """, (
-        email,
-    ))
-
+    """, (email,))
 
     user = cursor.fetchone()
 
-
     connection.close()
-
 
     if user is None:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Invalid email or password."
-
+            "message": "Invalid email or password."
         }), 401
-
 
     if not check_password_hash(
         user["password_hash"],
@@ -458,43 +280,22 @@ def login():
     ):
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Invalid email or password."
-
+            "message": "Invalid email or password."
         }), 401
 
-
-    session.clear()
-
-    session.permanent = True
-
     session["user_id"] = user["id"]
-
     session["user_name"] = user["name"]
-
     session["user_email"] = user["email"]
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        "Login successful!",
-
+        "message": "Login successful!",
         "user": {
-
             "id": user["id"],
-
             "name": user["name"],
-
             "email": user["email"]
-
         }
-
     })
 
 
@@ -508,29 +309,16 @@ def current_user():
     if "user_id" not in session:
 
         return jsonify({
-
             "logged_in": False
-
         })
 
-
     return jsonify({
-
         "logged_in": True,
-
         "user": {
-
-            "id":
-            session.get("user_id"),
-
-            "name":
-            session.get("user_name"),
-
-            "email":
-            session.get("user_email")
-
+            "id": session["user_id"],
+            "name": session["user_name"],
+            "email": session["user_email"]
         }
-
     })
 
 
@@ -538,105 +326,60 @@ def current_user():
 # LOGOUT
 # =========================================================
 
-@app.route(
-    "/logout",
-    methods=["POST"]
-)
+@app.route("/logout", methods=["POST"])
 def logout():
 
     session.clear()
 
     return jsonify({
-
         "success": True,
-
-        "message":
-        "Logged out successfully."
-
+        "message": "Logged out successfully."
     })
 
 
 # =========================================================
-# LOGGED-IN USER
+# LOGIN CHECK
 # =========================================================
 
 def get_logged_in_user():
 
-    return session.get(
-        "user_id"
-    )
+    return session.get("user_id")
 
 
 # =========================================================
 # ADD TASK
 # =========================================================
 
-@app.route(
-    "/add-task",
-    methods=["POST"]
-)
+@app.route("/add-task", methods=["POST"])
 def add_task():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
+    data = request.get_json()
 
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-
-    task = data.get(
-        "task",
-        ""
-    ).strip()
-
-    deadline = data.get(
-        "deadline"
-    )
-
-    priority = data.get(
-        "priority",
-        "MEDIUM"
-    ).upper()
-
+    task = data.get("task", "").strip()
+    deadline = data.get("deadline")
+    priority = data.get("priority", "MEDIUM").upper()
 
     if not task:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Task is required."
-
+            "message": "Task is required."
         }), 400
 
-
-    if priority not in [
-        "HIGH",
-        "MEDIUM",
-        "LOW"
-    ]:
-
+    if priority not in ["HIGH", "MEDIUM", "LOW"]:
         priority = "MEDIUM"
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         INSERT INTO tasks
@@ -649,9 +392,7 @@ def add_task():
         priority
     ))
 
-
     task_id = cursor.lastrowid
-
 
     cursor.execute("""
         INSERT INTO history
@@ -665,22 +406,13 @@ def add_task():
         priority
     ))
 
-
     connection.commit()
-
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        "Task added successfully!",
-
-        "task_id":
-        task_id
-
+        "message": "Task added successfully!",
+        "task_id": task_id
     })
 
 
@@ -693,59 +425,36 @@ def get_tasks():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT *
         FROM tasks
         WHERE user_id = ?
+        ORDER BY completed ASC,
+                 CASE priority
+                     WHEN 'HIGH' THEN 1
+                     WHEN 'MEDIUM' THEN 2
+                     WHEN 'LOW' THEN 3
+                 END,
+                 deadline ASC
+    """, (user_id,))
 
-        ORDER BY
-            completed ASC,
-
-            CASE priority
-                WHEN 'HIGH' THEN 1
-                WHEN 'MEDIUM' THEN 2
-                WHEN 'LOW' THEN 3
-            END,
-
-            deadline ASC
-    """, (
-        user_id,
-    ))
-
-
-    tasks = [
-        dict(row)
-        for row in cursor.fetchall()
-    ]
-
+    tasks = [dict(row) for row in cursor.fetchall()]
 
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
         "tasks": tasks
-
     })
 
 
@@ -753,31 +462,20 @@ def get_tasks():
 # COMPLETE TASK
 # =========================================================
 
-@app.route(
-    "/complete-task/<int:task_id>",
-    methods=["POST"]
-)
+@app.route("/complete-task/<int:task_id>", methods=["POST"])
 def complete_task(task_id):
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT *
@@ -789,42 +487,30 @@ def complete_task(task_id):
         user_id
     ))
 
-
     task = cursor.fetchone()
-
 
     if not task:
 
         connection.close()
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Task not found."
-
+            "message": "Task not found."
         }), 404
-
 
     cursor.execute("""
         UPDATE tasks
-
         SET completed = 1
-
         WHERE id = ?
-
         AND user_id = ?
     """, (
         task_id,
         user_id
     ))
 
-
     cursor.execute("""
         INSERT INTO history
         (user_id, task, action, deadline, priority)
-
         VALUES (?, ?, ?, ?, ?)
     """, (
         user_id,
@@ -834,19 +520,12 @@ def complete_task(task_id):
         task["priority"]
     ))
 
-
     connection.commit()
-
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        "Task completed!"
-
+        "message": "Task completed!"
     })
 
 
@@ -854,31 +533,20 @@ def complete_task(task_id):
 # DELETE TASK
 # =========================================================
 
-@app.route(
-    "/delete-task/<int:task_id>",
-    methods=["DELETE"]
-)
+@app.route("/delete-task/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT *
@@ -890,28 +558,20 @@ def delete_task(task_id):
         user_id
     ))
 
-
     task = cursor.fetchone()
-
 
     if not task:
 
         connection.close()
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Task not found."
-
+            "message": "Task not found."
         }), 404
-
 
     cursor.execute("""
         INSERT INTO history
         (user_id, task, action, deadline, priority)
-
         VALUES (?, ?, ?, ?, ?)
     """, (
         user_id,
@@ -921,31 +581,21 @@ def delete_task(task_id):
         task["priority"]
     ))
 
-
     cursor.execute("""
         DELETE FROM tasks
-
         WHERE id = ?
-
         AND user_id = ?
     """, (
         task_id,
         user_id
     ))
 
-
     connection.commit()
-
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        "Task deleted."
-
+        "message": "Task deleted."
     })
 
 
@@ -953,112 +603,57 @@ def delete_task(task_id):
 # EDIT TASK
 # =========================================================
 
-@app.route(
-    "/edit-task/<int:task_id>",
-    methods=["PUT"]
-)
+@app.route("/edit-task/<int:task_id>", methods=["PUT"])
 def edit_task(task_id):
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
+    data = request.get_json()
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    task_text = data.get("task", "").strip()
+    deadline = data.get("deadline")
+    priority = data.get("priority", "MEDIUM").upper()
 
-
-    task_text = data.get(
-        "task",
-        ""
-    ).strip()
-
-    deadline = data.get(
-        "deadline"
-    )
-
-    priority = data.get(
-        "priority",
-        "MEDIUM"
-    ).upper()
-
-
-    if not task_text:
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-            "Task is required."
-
-        }), 400
-
-
-    if priority not in [
-        "HIGH",
-        "MEDIUM",
-        "LOW"
-    ]:
-
+    if priority not in ["HIGH", "MEDIUM", "LOW"]:
         priority = "MEDIUM"
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT *
         FROM tasks
-
         WHERE id = ?
-
         AND user_id = ?
     """, (
         task_id,
         user_id
     ))
 
-
     old_task = cursor.fetchone()
-
 
     if not old_task:
 
         connection.close()
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Task not found."
-
+            "message": "Task not found."
         }), 404
-
 
     cursor.execute("""
         UPDATE tasks
-
         SET task = ?,
             deadline = ?,
             priority = ?
-
         WHERE id = ?
-
         AND user_id = ?
     """, (
         task_text,
@@ -1068,11 +663,9 @@ def edit_task(task_id):
         user_id
     ))
 
-
     cursor.execute("""
         INSERT INTO history
         (user_id, task, action, deadline, priority)
-
         VALUES (?, ?, ?, ?, ?)
     """, (
         user_id,
@@ -1082,19 +675,12 @@ def edit_task(task_id):
         priority
     ))
 
-
     connection.commit()
-
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        "Task updated successfully!"
-
+        "message": "Task updated successfully!"
     })
 
 
@@ -1102,94 +688,46 @@ def edit_task(task_id):
 # SNOOZE TASK
 # =========================================================
 
-@app.route(
-    "/snooze-task/<int:task_id>",
-    methods=["POST"]
-)
+@app.route("/snooze-task/<int:task_id>", methods=["POST"])
 def snooze_task(task_id):
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
+    data = request.get_json()
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    minutes = int(data.get("minutes", 10))
 
+    snooze_time = datetime.now() + timedelta(minutes=minutes)
 
-    try:
-
-        minutes = int(
-            data.get(
-                "minutes",
-                10
-            )
-        )
-
-    except Exception:
-
-        minutes = 10
-
-
-    if minutes not in [
-        10,
-        30,
-        60
-    ]:
-
-        minutes = 10
-
-
-    snooze_time = (
-        datetime.now()
-        +
-        timedelta(minutes=minutes)
-    )
-
+    snooze_string = snooze_time.isoformat()
 
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         UPDATE tasks
-
         SET snooze_until = ?
-
         WHERE id = ?
-
         AND user_id = ?
     """, (
-        snooze_time.isoformat(),
+        snooze_string,
         task_id,
         user_id
     ))
 
-
     connection.commit()
-
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        f"Task snoozed for {minutes} minutes."
-
+        "message": f"Task snoozed for {minutes} minutes."
     })
 
 
@@ -1202,51 +740,30 @@ def get_history():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT *
         FROM history
-
         WHERE user_id = ?
-
         ORDER BY timestamp DESC
-    """, (
-        user_id,
-    ))
+    """, (user_id,))
 
-
-    history = [
-        dict(row)
-        for row in cursor.fetchall()
-    ]
-
+    history = [dict(row) for row in cursor.fetchall()]
 
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
         "history": history
-
     })
 
 
@@ -1254,56 +771,36 @@ def get_history():
 # DELETE HISTORY ITEM
 # =========================================================
 
-@app.route(
-    "/delete-history/<int:history_id>",
-    methods=["DELETE"]
-)
+@app.route("/delete-history/<int:history_id>", methods=["DELETE"])
 def delete_history(history_id):
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         DELETE FROM history
-
         WHERE id = ?
-
         AND user_id = ?
     """, (
         history_id,
         user_id
     ))
 
-
     connection.commit()
-
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
-        "message":
-        "History item deleted."
-
+        "message": "History item deleted."
     })
 
 
@@ -1311,53 +808,67 @@ def delete_history(history_id):
 # CLEAR ALL TASKS
 # =========================================================
 
-@app.route(
-    "/clear-tasks",
-    methods=["DELETE"]
-)
+@app.route("/clear-tasks", methods=["DELETE"])
 def clear_tasks():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         DELETE FROM tasks
-
         WHERE user_id = ?
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     connection.commit()
-
     connection.close()
 
+    return jsonify({
+        "success": True,
+        "message": "All tasks cleared."
+    })
+
+
+# =========================================================
+# CLEAR ALL HISTORY (CURRENT USER ONLY)
+# =========================================================
+
+@app.route("/clear-history", methods=["DELETE"])
+def clear_history():
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        DELETE FROM history
+        WHERE user_id = ?
+    """, (user_id,))
+
+    deleted_count = cursor.rowcount
+
+    connection.commit()
+    connection.close()
 
     return jsonify({
-
         "success": True,
-
-        "message":
-        "All tasks cleared."
-
+        "message": "All history records cleared.",
+        "deleted_count": deleted_count
     })
 
 
@@ -1365,226 +876,132 @@ def clear_tasks():
 # PRODUCTIVITY INSIGHTS
 # =========================================================
 
-@app.route(
-    "/productivity-insights"
-)
+@app.route("/productivity-insights")
 def productivity_insights():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT COUNT(*) AS count
-
         FROM tasks
-
         WHERE user_id = ?
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     total = cursor.fetchone()["count"]
 
-
     cursor.execute("""
         SELECT COUNT(*) AS count
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 1
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     completed = cursor.fetchone()["count"]
 
-
     cursor.execute("""
         SELECT COUNT(*) AS count
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 0
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     pending = cursor.fetchone()["count"]
 
-
     cursor.execute("""
         SELECT COUNT(*) AS count
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 0
-
         AND priority = 'HIGH'
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     high = cursor.fetchone()["count"]
 
-
     cursor.execute("""
         SELECT COUNT(*) AS count
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 0
-
         AND priority = 'MEDIUM'
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     medium = cursor.fetchone()["count"]
 
-
     cursor.execute("""
         SELECT COUNT(*) AS count
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 0
-
         AND priority = 'LOW'
-    """, (
-        user_id,
-    ))
-
+    """, (user_id,))
 
     low = cursor.fetchone()["count"]
 
-
     connection.close()
-
 
     completion_rate = 0
 
-
     if total > 0:
-
         completion_rate = round(
             (completed / total) * 100,
             1
         )
 
-
     return jsonify({
-
         "success": True,
-
         "total": total,
-
         "completed": completed,
-
         "pending": pending,
-
         "high": high,
-
         "medium": medium,
-
         "low": low,
-
-        "completion_rate":
-        completion_rate
-
+        "completion_rate": completion_rate
     })
 
 
 # =========================================================
-# AI TASK ANALYZER
+# GEMINI AI TASK ANALYZER
 # =========================================================
 
-@app.route(
-    "/ai-analyze",
-    methods=["POST"]
-)
+@app.route("/ai-analyze", methods=["POST"])
 def ai_analyze():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
-
 
     if not gemini_client:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Gemini AI is not connected."
-
+            "message": "Gemini AI is not connected."
         }), 500
 
+    data = request.get_json()
 
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-
-    task_text = data.get(
-        "task",
-        ""
-    ).strip()
-
+    task_text = data.get("task", "").strip()
 
     if not task_text:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please enter a task."
-
+            "message": "Please enter a task."
         }), 400
-
 
     prompt = f"""
 You are an AI productivity assistant.
@@ -1604,157 +1021,94 @@ SUGGESTED_DEADLINE:
 ACTION:
 
 Priority must be one of:
-
 HIGH
 MEDIUM
 LOW
 
 Keep the response practical and easy to understand.
-
 Do not invent personal information.
 """
-
 
     try:
 
         response = gemini_client.models.generate_content(
-
             model="gemini-3.5-flash",
-
             contents=prompt
-
         )
 
+        ai_response = response.text
 
         return jsonify({
-
             "success": True,
-
-            "ai_response":
-            response.text
-
+            "ai_response": ai_response
         })
-
 
     except Exception as error:
 
-        print(
-            "Gemini error:",
-            error
-        )
-
+        print("Gemini error:", error)
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Gemini AI could not process the task.",
-
-            "error":
-            str(error)
-
+            "message": "Gemini AI could not process the task.",
+            "error": str(error)
         }), 500
 
 
 # =========================================================
-# AI DAILY PLANNER
+# GEMINI AI DAILY PLANNER
 # =========================================================
 
-@app.route(
-    "/ai-daily-plan",
-    methods=["GET"]
-)
+@app.route("/ai-daily-plan", methods=["GET"])
 def ai_daily_plan():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
-
 
     if not gemini_client:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Gemini AI is not connected."
-
+            "message": "Gemini AI is not connected."
         }), 500
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT id, task, deadline, priority
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 0
-
         ORDER BY deadline ASC
-    """, (
-        user_id,
-    ))
+    """, (user_id,))
 
-
-    tasks = [
-        dict(row)
-        for row in cursor.fetchall()
-    ]
-
+    tasks = [dict(row) for row in cursor.fetchall()]
 
     connection.close()
-
 
     if not tasks:
 
         return jsonify({
-
             "success": True,
-
-            "plan":
-            "You currently have no pending tasks."
-
+            "plan": "You currently have no pending tasks."
         })
-
 
     task_text = ""
 
-
-    for index, task in enumerate(
-        tasks,
-        start=1
-    ):
+    for index, task in enumerate(tasks, start=1):
 
         task_text += (
-
             f"{index}. "
-
             f"Task: {task['task']} | "
-
             f"Deadline: {task['deadline']} | "
-
             f"Priority: {task['priority']}\n"
-
         )
-
 
     prompt = f"""
 You are an intelligent personal productivity agent.
@@ -1790,110 +1144,64 @@ BREAKS
 FINAL TIP
 """
 
-
     try:
 
         response = gemini_client.models.generate_content(
-
             model="gemini-3.5-flash",
-
             contents=prompt
-
         )
 
-
         return jsonify({
-
             "success": True,
-
-            "plan":
-            response.text
-
+            "plan": response.text
         })
-
 
     except Exception as error:
 
-        print(
-            "Gemini planner error:",
-            error
-        )
-
+        print("Gemini planner error:", error)
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Gemini could not create the daily plan.",
-
-            "error":
-            str(error)
-
+            "message": "Gemini could not create the daily plan.",
+            "error": str(error)
         }), 500
 
 
 # =========================================================
-# AI PRODUCTIVITY COACH
+# GEMINI PRODUCTIVITY COACH
 # =========================================================
 
-@app.route(
-    "/ai-coach",
-    methods=["POST"]
-)
+@app.route("/ai-coach", methods=["POST"])
 def ai_coach():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
-
 
     if not gemini_client:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Gemini AI is not connected."
-
+            "message": "Gemini AI is not connected."
         }), 500
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT task, deadline, priority, completed
-
         FROM tasks
-
         WHERE user_id = ?
-    """, (
-        user_id,
-    ))
+    """, (user_id,))
 
-
-    tasks = [
-        dict(row)
-        for row in cursor.fetchall()
-    ]
-
+    tasks = [dict(row) for row in cursor.fetchall()]
 
     connection.close()
-
 
     prompt = f"""
 You are a friendly AI productivity coach.
@@ -1910,55 +1218,34 @@ Give the user:
 4. One motivating sentence.
 
 Keep it concise.
-
 Do not make assumptions about the user's personal life.
 """
-
 
     try:
 
         response = gemini_client.models.generate_content(
-
             model="gemini-3.5-flash",
-
             contents=prompt
-
         )
 
-
         return jsonify({
-
             "success": True,
-
-            "coach":
-            response.text
-
+            "coach": response.text
         })
-
 
     except Exception as error:
 
-        print(
-            "Gemini coach error:",
-            error
-        )
-
+        print("Gemini coach error:", error)
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "AI coach could not respond.",
-
-            "error":
-            str(error)
-
+            "message": "AI coach could not respond.",
+            "error": str(error)
         }), 500
 
 
 # =========================================================
-# OLD DAILY PLAN ROUTE
+# OLD DAILY PLAN COMPATIBILITY ROUTE
 # =========================================================
 
 @app.route("/daily-plan")
@@ -1966,71 +1253,42 @@ def daily_plan():
 
     user_id = get_logged_in_user()
 
-
     if not user_id:
 
         return jsonify({
-
             "success": False,
-
-            "message":
-            "Please login first."
-
+            "message": "Please login first."
         }), 401
 
-
     connection = get_connection()
-
     cursor = connection.cursor()
-
 
     cursor.execute("""
         SELECT id, task, deadline, priority
-
         FROM tasks
-
         WHERE user_id = ?
-
         AND completed = 0
-
         ORDER BY
-
             CASE priority
-
                 WHEN 'HIGH' THEN 1
-
                 WHEN 'MEDIUM' THEN 2
-
                 WHEN 'LOW' THEN 3
-
             END,
-
             deadline ASC
-    """, (
-        user_id,
-    ))
+    """, (user_id,))
 
-
-    tasks = [
-        dict(row)
-        for row in cursor.fetchall()
-    ]
-
+    tasks = [dict(row) for row in cursor.fetchall()]
 
     connection.close()
 
-
     return jsonify({
-
         "success": True,
-
         "plan": tasks
-
     })
 
 
 # =========================================================
-# REMINDER SYSTEM
+# REMINDER WORKER
 # =========================================================
 
 reminded_tasks = set()
@@ -2038,41 +1296,28 @@ reminded_tasks = set()
 
 def reminder_worker():
 
-    print(
-        "⏰ Reminder system started."
-    )
-
+    print("⏰ Reminder system started.")
 
     while True:
 
         try:
 
             connection = get_connection()
-
             cursor = connection.cursor()
-
 
             cursor.execute("""
                 SELECT *
-
                 FROM tasks
-
                 WHERE completed = 0
-
                 AND deadline IS NOT NULL
-
                 AND snooze_until IS NULL
             """)
 
-
             tasks = cursor.fetchall()
-
 
             connection.close()
 
-
             now = datetime.now()
-
 
             for task in tasks:
 
@@ -2086,24 +1331,11 @@ def reminder_worker():
 
                     continue
 
+                reminder_time = deadline - timedelta(minutes=5)
 
-                reminder_time = (
-                    deadline
-                    -
-                    timedelta(minutes=5)
-                )
+                key = f"{task['user_id']}_{task['id']}"
 
-
-                key = (
-                    f"{task['user_id']}_{task['id']}"
-                )
-
-
-                if (
-                    now >= reminder_time
-                    and
-                    now <= deadline
-                ):
+                if now >= reminder_time and now <= deadline:
 
                     if key not in reminded_tasks:
 
@@ -2111,38 +1343,25 @@ def reminder_worker():
                             f"🔔 Reminder: {task['task']}"
                         )
 
-
                         if WINOTIFY_AVAILABLE:
 
                             try:
 
                                 toast = Notification(
-
-                                    app_id=
-                                    "AI Productivity Agent",
-
-                                    title=
-                                    "Task Reminder",
-
+                                    app_id="AI Productivity Agent",
+                                    title="Task Reminder",
                                     msg=(
                                         f"{task['task']} "
                                         f"is due soon."
                                     )
-
                                 )
-
 
                                 toast.set_audio(
-
                                     audio.Default,
-
                                     loop=False
-
                                 )
 
-
                                 toast.show()
-
 
                             except Exception as error:
 
@@ -2151,11 +1370,7 @@ def reminder_worker():
                                     error
                                 )
 
-
-                        reminded_tasks.add(
-                            key
-                        )
-
+                        reminded_tasks.add(key)
 
         except Exception as error:
 
@@ -2163,7 +1378,6 @@ def reminder_worker():
                 "Reminder worker error:",
                 error
             )
-
 
         time.sleep(30)
 
@@ -2174,98 +1388,33 @@ def reminder_worker():
 
 if __name__ == "__main__":
 
-    enable_desktop_reminders = (
+    create_tables()
 
-        os.getenv(
-            "ENABLE_DESKTOP_REMINDERS",
-            "true"
-        ).lower() == "true"
-
-        and
-
-        WINOTIFY_AVAILABLE
-
+    reminder_thread = threading.Thread(
+        target=reminder_worker,
+        daemon=True
     )
 
-
-    if enable_desktop_reminders:
-
-        reminder_thread = threading.Thread(
-
-            target=reminder_worker,
-
-            daemon=True
-
-        )
-
-        reminder_thread.start()
-
-    else:
-
-        print(
-            "⏰ Desktop reminders disabled "
-            "(hosted/non-Windows mode)."
-        )
-
+    reminder_thread.start()
 
     print("")
-
-    print(
-        "========================================"
-    )
-
-    print(
-        "🚀 AI PRODUCTIVITY AGENT"
-    )
-
-    print(
-        "========================================"
-    )
-
-    print(
-        "🌐 Backend running"
-    )
+    print("========================================")
+    print("🚀 AI PRODUCTIVITY AGENT")
+    print("========================================")
+    print("🌐 Backend: http://127.0.0.1:5000")
 
     if gemini_client:
-
-        print(
-            "🤖 Gemini AI: Connected"
-        )
-
+        print("🤖 Gemini AI: Connected")
     else:
+        print("🤖 Gemini AI: Not Connected")
 
-        print(
-            "🤖 Gemini AI: Not Connected"
-        )
-
-
-    print(
-        "⏰ Reminder System: Running"
-    )
-
-    print(
-        "========================================"
-    )
-
+    print("⏰ Reminder System: Running")
+    print("========================================")
     print("")
 
-
-    port = int(
-        os.getenv(
-            "PORT",
-            "5000"
-        )
-    )
-
-
     app.run(
-
-        host="0.0.0.0",
-
-        port=port,
-
-        debug=False,
-
+        host="127.0.0.1",
+        port=5000,
+        debug=True,
         use_reloader=False
-
     )
