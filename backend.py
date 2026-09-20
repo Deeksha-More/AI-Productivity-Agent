@@ -1384,6 +1384,8 @@ def reminder_worker():
 
         time.sleep(30)
 
+# Create database tables when backend starts
+create_tables()
 
 # =========================================================
 # START SERVER
