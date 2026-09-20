@@ -370,6 +370,22 @@ def add_task():
     task = data.get("task", "").strip()
     deadline = data.get("deadline")
     priority = data.get("priority", "MEDIUM").upper()
+    # Reject deadlines that are in the past
+    if deadline:
+        try:
+            deadline_dt = datetime.fromisoformat(deadline)
+
+            if deadline_dt <= datetime.now():
+                return jsonify({
+                    "success": False,
+                    "message": "Deadline must be in the future. Please select a valid date and time."
+                }), 400
+
+        except ValueError:
+            return jsonify({
+            "success": False,
+            "message": "Invalid deadline format."
+        }), 400
 
     if not task:
 
