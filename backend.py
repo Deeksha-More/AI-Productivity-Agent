@@ -355,84 +355,85 @@ def get_logged_in_user():
 
 @app.route("/add-task", methods=["POST"])
 def add_task():
-
     user_id = get_logged_in_user()
 
     if not user_id:
-
         return jsonify({
             "success": False,
             "message": "Please login first."
         }), 401
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     task = data.get("task", "").strip()
     deadline = data.get("deadline")
     priority = data.get("priority", "MEDIUM").upper()
-    # Reject deadlines that are in the past
-    if deadline:
-        try:
-            deadline_dt = datetime.fromisoformat(deadline)
 
-            if deadline_dt <= datetime.now():
-                return jsonify({
-                    "success": False,
-                    "message": "Deadline must be in the future. Please select a valid date and time."
-                }), 400
-
-        except ValueError:
-            return jsonify({
-            "success": False,
-            "message": "Invalid deadline format."
-        }), 400
-
+    # Validate task
     if not task:
-
         return jsonify({
             "success": False,
             "message": "Task is required."
         }), 400
 
+    # Validate priority
     if priority not in ["HIGH", "MEDIUM", "LOW"]:
         priority = "MEDIUM"
+
+    # Reject past deadlines
+    if deadline:
+        try:
+            deadline_dt = datetime.fromisoformat(deadline)
+
+            if deadline_dt.tzinfo:
+                now = datetime.now(deadline_dt.tzinfo)
+            else:
+                now = datetime.now()
+
+            if deadline_dt <= now:
+                return jsonify({
+                    "success": False,
+                    "message": (
+                        "Deadline must be in the future. "
+                        "Please select a valid date and time."
+                    )
+                }), 400
+
+        except ValueError:
+            return jsonify({
+                "success": False,
+                "message": "Invalid deadline format."
+            }), 400
 
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("""
-        INSERT INTO tasks
-        (user_id, task, deadline, priority)
-        VALUES (?, ?, ?, ?)
-    """, (
-        user_id,
-        task,
-        deadline,
-        priority
-    ))
+    try:
+        # Save task ONLY in tasks table
+        # Do not insert "Task Created" into history
+        cursor.execute("""
+            INSERT INTO tasks
+            (user_id, task, deadline, priority)
+            VALUES (?, ?, ?, ?)
+        """, (
+            user_id,
+            task,
+            deadline,
+            priority
+        ))
 
-    task_id = cursor.lastrowid
+        task_id = cursor.lastrowid
 
-    cursor.execute("""
-        INSERT INTO history
-        (user_id, task, action, deadline, priority)
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        user_id,
-        task,
-        "Task Created",
-        deadline,
-        priority
-    ))
+        connection.commit()
 
-    connection.commit()
-    connection.close()
+        return jsonify({
+            "success": True,
+            "message": "Task added successfully!",
+            "task_id": task_id
+        })
 
-    return jsonify({
-        "success": True,
-        "message": "Task added successfully!",
-        "task_id": task_id
-    })
+    finally:
+        connection.close()
 
 
 # =========================================================
@@ -790,13 +791,11 @@ def get_history():
 # DELETE HISTORY ITEM
 # =========================================================
 
-@app.route("/delete-history/<int:history_id>", methods=["DELETE"])
-def delete_history(history_id):
-
+@app.route("/history")
+def get_history():
     user_id = get_logged_in_user()
 
     if not user_id:
-
         return jsonify({
             "success": False,
             "message": "Please login first."
@@ -805,22 +804,28 @@ def delete_history(history_id):
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("""
-        DELETE FROM history
-        WHERE id = ?
-        AND user_id = ?
-    """, (
-        history_id,
-        user_id
-    ))
+    try:
+        # Show only completed and deleted tasks
+        # Hide old "Task Created" and "Task Edited" records
+        cursor.execute("""
+            SELECT *
+            FROM history
+            WHERE user_id = ?
+            AND action IN ('Task Completed', 'Task Deleted')
+            ORDER BY timestamp DESC
+        """, (user_id,))
 
-    connection.commit()
-    connection.close()
+        history = [
+            dict(row) for row in cursor.fetchall()
+        ]
 
-    return jsonify({
-        "success": True,
-        "message": "History item deleted."
-    })
+        return jsonify({
+            "success": True,
+            "history": history
+        })
+
+    finally:
+        connection.close()
 
 
 # =========================================================
