@@ -761,41 +761,6 @@ def get_history():
     user_id = get_logged_in_user()
 
     if not user_id:
-
-        return jsonify({
-            "success": False,
-            "message": "Please login first."
-        }), 401
-
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""
-        SELECT *
-        FROM history
-        WHERE user_id = ?
-        ORDER BY timestamp DESC
-    """, (user_id,))
-
-    history = [dict(row) for row in cursor.fetchall()]
-
-    connection.close()
-
-    return jsonify({
-        "success": True,
-        "history": history
-    })
-
-
-# =========================================================
-# DELETE HISTORY ITEM
-# =========================================================
-
-@app.route("/history")
-def get_history():
-    user_id = get_logged_in_user()
-
-    if not user_id:
         return jsonify({
             "success": False,
             "message": "Please login first."
@@ -805,8 +770,6 @@ def get_history():
     cursor = connection.cursor()
 
     try:
-        # Show only completed and deleted tasks
-        # Hide old "Task Created" and "Task Edited" records
         cursor.execute("""
             SELECT *
             FROM history
