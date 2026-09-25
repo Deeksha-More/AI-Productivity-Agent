@@ -1,6 +1,8 @@
 import os
 import sqlite3
 import threading
+import secrets
+import hashlib
 import time
 from datetime import datetime, timedelta
 
@@ -64,20 +66,22 @@ app.secret_key = FLASK_SECRET_KEY
 # Maximum document upload size: 8 MB
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 
-# Vercel frontend -> Render backend is cross-site in production.
-# Credentials are enabled so Flask sessions work on mobile and desktop.
 CORS(
     app,
     supports_credentials=True,
     origins=[
-        "https://ai-productivity-agent-sigma.vercel.app",
+        r"https://.*\.vercel\.app",
         "http://127.0.0.1:5500",
         "http://localhost:5500"
     ]
 )
 
-# Render uses HTTPS and needs SameSite=None for the Vercel -> Render
-# session cookie. Local HTTP development uses Lax.
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
+
+# Render + Vercel are cross-site in production, so session cookies must
+# be Secure and SameSite=None. Keep local HTTP development working too.
 IS_PRODUCTION = bool(os.getenv("RENDER")) or os.getenv(
     "RENDER_EXTERNAL_URL", ""
 ).startswith("https://")
@@ -193,6 +197,17 @@ def create_tables():
     """)
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auth_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -253,6 +268,70 @@ def health():
 
 
 # =========================================================
+# TOKEN AUTHENTICATION
+# =========================================================
+
+def _hash_auth_token(token):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _create_auth_token(user_id):
+    token = secrets.token_urlsafe(48)
+    token_hash = _hash_auth_token(token)
+    expires_at = datetime.utcnow() + timedelta(days=30)
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
+        "DELETE FROM auth_tokens WHERE expires_at < ?",
+        (datetime.utcnow().isoformat(),)
+    )
+    cursor.execute("""
+        INSERT INTO auth_tokens (user_id, token_hash, expires_at)
+        VALUES (?, ?, ?)
+    """, (user_id, token_hash, expires_at.isoformat()))
+    connection.commit()
+    connection.close()
+    return token
+
+
+def _get_token_user_id():
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+
+    token = auth_header[7:].strip()
+    if not token:
+        return None
+
+    token_hash = _hash_auth_token(token)
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT user_id
+        FROM auth_tokens
+        WHERE token_hash = ?
+        AND expires_at > ?
+    """, (token_hash, datetime.utcnow().isoformat()))
+    row = cursor.fetchone()
+    connection.close()
+    return row["user_id"] if row else None
+
+
+def _revoke_auth_token():
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return
+    token = auth_header[7:].strip()
+    if not token:
+        return
+    connection = get_connection()
+    connection.execute("DELETE FROM auth_tokens WHERE token_hash = ?", (_hash_auth_token(token),))
+    connection.commit()
+    connection.close()
+
+
+# =========================================================
 # SIGNUP
 # =========================================================
 
@@ -304,9 +383,13 @@ def signup():
         session["user_name"] = name
         session["user_email"] = email
 
+        auth_token = _create_auth_token(user_id)
+
         return jsonify({
             "success": True,
             "message": "Account created successfully!",
+            "token": auth_token,
+            "expires_in_days": 30,
             "user": {
                 "id": user_id,
                 "name": name,
@@ -372,9 +455,13 @@ def login():
     session["user_name"] = user["name"]
     session["user_email"] = user["email"]
 
+    auth_token = _create_auth_token(user["id"])
+
     return jsonify({
         "success": True,
         "message": "Login successful!",
+        "token": auth_token,
+        "expires_in_days": 30,
         "user": {
             "id": user["id"],
             "name": user["name"],
@@ -390,18 +477,26 @@ def login():
 @app.route("/current-user")
 def current_user():
 
-    if "user_id" not in session:
+    user_id = get_logged_in_user()
 
-        return jsonify({
-            "logged_in": False
-        })
+    if not user_id:
+        return jsonify({"logged_in": False})
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT id, name, email FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    connection.close()
+
+    if user is None:
+        return jsonify({"logged_in": False})
 
     return jsonify({
         "logged_in": True,
         "user": {
-            "id": session["user_id"],
-            "name": session["user_name"],
-            "email": session["user_email"]
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"]
         }
     })
 
@@ -413,6 +508,7 @@ def current_user():
 @app.route("/logout", methods=["POST"])
 def logout():
 
+    _revoke_auth_token()
     session.clear()
 
     return jsonify({
@@ -426,6 +522,10 @@ def logout():
 # =========================================================
 
 def get_logged_in_user():
+
+    token_user_id = _get_token_user_id()
+    if token_user_id:
+        return token_user_id
 
     return session.get("user_id")
 
@@ -2214,6 +2314,8 @@ def reminder_worker():
 # =========================================================
 
 if __name__ == "__main__":
+
+    create_tables()
 
     reminder_thread = threading.Thread(
         target=reminder_worker,
