@@ -2715,15 +2715,69 @@ ${data.low}`;
         const input = document.getElementById("copilotInput");
         const status = document.getElementById("copilotStatus");
         const text = input ? input.value.trim() : "";
+
         if (!text) {
             if (status) status.textContent = "Please enter a message.";
             return;
         }
+
         addCopilotMessage(text, "user");
         input.value = "";
-        if (status) status.textContent = "Copilot backend connection will be added next.";
-        addCopilotMessage("I received your message. The Copilot UI is ready. Next we will connect this chat to Gemini without changing your existing task system.", "ai");
+
+        if (status) status.textContent = "🤖 Copilot is thinking...";
+
+        try {
+            const response = await apiFetch("/copilot-chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: text,
+                    tool: selectedCopilotTool
+                })
+            });
+
+            if (!response) return;
+
+            const data = await response.json();
+
+            if (!data.success) {
+                addCopilotMessage(
+                    "❌ " + (data.message || "Copilot could not respond."),
+                    "ai"
+                );
+                if (status) status.textContent = "Something went wrong.";
+                return;
+            }
+
+            addCopilotMessage(data.reply || "I could not generate a response.", "ai");
+
+            if (status) status.textContent = "✅ Ready";
+        } catch (error) {
+            console.error("Copilot chat error:", error);
+
+            addCopilotMessage(
+                "❌ Unable to connect to the Copilot backend. Please try again.",
+                "ai"
+            );
+
+            if (status) status.textContent = "Backend connection failed.";
+        }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.getElementById("copilotInput");
+
+        if (input) {
+            input.addEventListener("keydown", function (event) {
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    sendCopilotMessage();
+                }
+            });
+        }
+    });
 
     function startCopilotVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
