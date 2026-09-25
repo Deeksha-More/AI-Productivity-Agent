@@ -79,7 +79,8 @@ app.config["SESSION_COOKIE_SECURE"] = IS_PRODUCTION
 # DATABASE
 # =========================================================
 
-DATABASE = "ai_assistant.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "ai_assistant.db")
 
 
 def get_connection():
@@ -140,6 +141,15 @@ def create_tables():
     connection.close()
 
     print("✅ Database ready!")
+
+
+# IMPORTANT: Gunicorn/Render imports this module instead of running
+# `python backend.py`, so the database must be initialized at import time.
+try:
+    create_tables()
+except Exception as error:
+    print("❌ Database initialization failed:", error)
+    raise
 
 
 # =========================================================
