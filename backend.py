@@ -355,85 +355,68 @@ def get_logged_in_user():
 
 @app.route("/add-task", methods=["POST"])
 def add_task():
+
     user_id = get_logged_in_user()
 
     if not user_id:
+
         return jsonify({
             "success": False,
             "message": "Please login first."
         }), 401
 
-    data = request.get_json(silent=True) or {}
+    data = request.get_json()
 
     task = data.get("task", "").strip()
     deadline = data.get("deadline")
     priority = data.get("priority", "MEDIUM").upper()
 
-    # Validate task
     if not task:
+
         return jsonify({
             "success": False,
             "message": "Task is required."
         }), 400
 
-    # Validate priority
     if priority not in ["HIGH", "MEDIUM", "LOW"]:
         priority = "MEDIUM"
-
-    # Reject past deadlines
-    if deadline:
-        try:
-            deadline_dt = datetime.fromisoformat(deadline)
-
-            if deadline_dt.tzinfo:
-                now = datetime.now(deadline_dt.tzinfo)
-            else:
-                now = datetime.now()
-
-            if deadline_dt <= now:
-                return jsonify({
-                    "success": False,
-                    "message": (
-                        "Deadline must be in the future. "
-                        "Please select a valid date and time."
-                    )
-                }), 400
-
-        except ValueError:
-            return jsonify({
-                "success": False,
-                "message": "Invalid deadline format."
-            }), 400
 
     connection = get_connection()
     cursor = connection.cursor()
 
-    try:
-        # Save task ONLY in tasks table
-        # Do not insert "Task Created" into history
-        cursor.execute("""
-            INSERT INTO tasks
-            (user_id, task, deadline, priority)
-            VALUES (?, ?, ?, ?)
-        """, (
-            user_id,
-            task,
-            deadline,
-            priority
-        ))
+    cursor.execute("""
+        INSERT INTO tasks
+        (user_id, task, deadline, priority)
+        VALUES (?, ?, ?, ?)
+    """, (
+        user_id,
+        task,
+        deadline,
+        priority
+    ))
 
-        task_id = cursor.lastrowid
+    task_id = cursor.lastrowid
 
-        connection.commit()
+    cursor.execute("""
+        INSERT INTO history
+        (user_id, task, action, deadline, priority)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        user_id,
+        task,
+        "Task Created",
+        deadline,
+        priority
+    ))
 
-        return jsonify({
-            "success": True,
-            "message": "Task added successfully!",
-            "task_id": task_id
-        })
+    connection.commit()
+    connection.close()
 
-    finally:
-        connection.close()
+    return jsonify({
+        "success": True,
+        "message": "Task added successfully!",
+        "task_id": task_id
+    })
 
 
 # =========================================================
@@ -761,6 +744,7 @@ def get_history():
     user_id = get_logged_in_user()
 
     if not user_id:
+
         return jsonify({
             "success": False,
             "message": "Please login first."
@@ -769,26 +753,58 @@ def get_history():
     connection = get_connection()
     cursor = connection.cursor()
 
-    try:
-        cursor.execute("""
-            SELECT *
-            FROM history
-            WHERE user_id = ?
-            AND action IN ('Task Completed', 'Task Deleted')
-            ORDER BY timestamp DESC
-        """, (user_id,))
+    cursor.execute("""
+        SELECT *
+        FROM history
+        WHERE user_id = ?
+        ORDER BY timestamp DESC
+    """, (user_id,))
 
-        history = [
-            dict(row) for row in cursor.fetchall()
-        ]
+    history = [dict(row) for row in cursor.fetchall()]
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "history": history
+    })
+
+
+# =========================================================
+# DELETE HISTORY ITEM
+# =========================================================
+
+@app.route("/delete-history/<int:history_id>", methods=["DELETE"])
+def delete_history(history_id):
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
 
         return jsonify({
-            "success": True,
-            "history": history
-        })
+            "success": False,
+            "message": "Please login first."
+        }), 401
 
-    finally:
-        connection.close()
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        DELETE FROM history
+        WHERE id = ?
+        AND user_id = ?
+    """, (
+        history_id,
+        user_id
+    ))
+
+    connection.commit()
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "message": "History item deleted."
+    })
 
 
 # =========================================================
@@ -1274,6 +1290,146 @@ def daily_plan():
     })
 
 
+
+# =========================================================
+# AI LIFE & STUDY COPILOT
+# =========================================================
+
+@app.route("/copilot-chat", methods=["POST"])
+def copilot_chat():
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    if not gemini_client:
+        return jsonify({
+            "success": False,
+            "message": "Gemini AI is not connected."
+        }), 500
+
+    data = request.get_json(silent=True) or {}
+
+    user_message = str(data.get("message", "")).strip()
+    tool = str(data.get("tool", "General Copilot")).strip()
+
+    if not user_message:
+        return jsonify({
+            "success": False,
+            "message": "Please enter a message."
+        }), 400
+
+    # Use the user's existing task data as lightweight context.
+    # This does not modify the tasks table or any existing task routes.
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT task, deadline, priority, completed
+        FROM tasks
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 20
+    """, (user_id,))
+
+    tasks = [dict(row) for row in cursor.fetchall()]
+    connection.close()
+
+    task_context = "\n".join(
+        f"- {task['task']} | deadline: {task['deadline'] or 'None'} | "
+        f"priority: {task['priority'] or 'MEDIUM'} | "
+        f"completed: {'Yes' if task['completed'] else 'No'}"
+        for task in tasks
+    )
+
+    if not task_context:
+        task_context = "No tasks are currently available."
+
+    tool_instructions = {
+        "Study Buddy":
+            "Teach clearly using simple explanations, examples, short revision points, and exam-focused guidance.",
+        "Writing Assistant":
+            "Help improve writing, structure, grammar, clarity, tone, assignments, reports, and emails.",
+        "Presentation Coach":
+            "Help with presentation structure, speaking practice, confidence, timing, and concise delivery.",
+        "Coding Buddy":
+            "Explain code and errors step by step. Prefer beginner-friendly solutions and safe code.",
+        "Document Analyzer":
+            "Help the user understand documents they provide. If no document content is provided, clearly say that and help with the question using the available context.",
+        "Research Assistant":
+            "Help organize research questions, topics, outlines, keywords, and evidence-aware next steps. Do not invent sources.",
+        "Idea Generator":
+            "Generate practical, original ideas for projects, presentations, innovation, and problem solving.",
+        "Knowledge Vault":
+            "Help organize and recall information the user shares in the conversation. Do not claim to remember information that was not provided.",
+        "Problem Solver":
+            "Break problems into small logical steps and explain the reasoning clearly.",
+        "General Copilot":
+            "Act as a helpful general-purpose study and productivity assistant."
+    }
+
+    instructions = tool_instructions.get(
+        tool,
+        tool_instructions["General Copilot"]
+    )
+
+    prompt = f"""
+You are the AI Life & Study Copilot inside a student's productivity application.
+
+Current Copilot mode: {tool}
+
+Mode instructions:
+{instructions}
+
+The student's current task context is:
+{task_context}
+
+User's message:
+{user_message}
+
+Rules:
+1. Answer the user's actual question first.
+2. Be concise but useful.
+3. Use simple language suitable for a college student.
+4. If the question is academic, explain step by step when useful.
+5. If the user asks about their tasks, use the task context above.
+6. Never invent deadlines, tasks, documents, personal facts, or sources.
+7. Do not claim to have analyzed a document unless document content was actually supplied.
+8. Do not change, delete, complete, or create tasks from this chat.
+9. If information is missing, say what is missing and still provide useful guidance.
+"""
+
+    try:
+        response = gemini_client.models.generate_content(
+            model="gemini-3.5-flash",
+            contents=prompt
+        )
+
+        reply = (response.text or "").strip()
+
+        if not reply:
+            reply = "I could not generate a response. Please try again."
+
+        return jsonify({
+            "success": True,
+            "reply": reply,
+            "tool": tool
+        })
+
+    except Exception as error:
+        print("Gemini Copilot error:", error)
+
+        return jsonify({
+            "success": False,
+            "message": "Copilot could not respond right now.",
+            "error": str(error)
+        }), 500
+
+
 # =========================================================
 # REMINDER WORKER
 # =========================================================
@@ -1368,8 +1524,6 @@ def reminder_worker():
 
         time.sleep(30)
 
-# Create database tables when backend starts
-create_tables()
 
 # =========================================================
 # START SERVER
