@@ -1278,16 +1278,20 @@
 
         try {
 
+            const authToken = localStorage.getItem("ai_productivity_auth_token");
+
             const requestOptions = {
                 ...options,
-
                 credentials: "include",
-
                 headers: {
                     "Accept": "application/json",
                     ...(options.headers || {})
                 }
             };
+
+            if (authToken) {
+                requestOptions.headers.Authorization = "Bearer " + authToken;
+            }
 
             console.log(
                 "Connecting to:",
@@ -1537,6 +1541,7 @@
 
         } finally {
 
+            localStorage.removeItem("ai_productivity_auth_token");
             window.location.href =
                 "auth.html";
 
