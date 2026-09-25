@@ -64,22 +64,20 @@ app.secret_key = FLASK_SECRET_KEY
 # Maximum document upload size: 8 MB
 app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
 
+# Vercel frontend -> Render backend is cross-site in production.
+# Credentials are enabled so Flask sessions work on mobile and desktop.
 CORS(
     app,
     supports_credentials=True,
     origins=[
-        r"https://.*\.vercel\.app",
+        "https://ai-productivity-agent-sigma.vercel.app",
         "http://127.0.0.1:5500",
         "http://localhost:5500"
     ]
 )
 
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = True
-
-# Render + Vercel are cross-site in production, so session cookies must
-# be Secure and SameSite=None. Keep local HTTP development working too.
+# Render uses HTTPS and needs SameSite=None for the Vercel -> Render
+# session cookie. Local HTTP development uses Lax.
 IS_PRODUCTION = bool(os.getenv("RENDER")) or os.getenv(
     "RENDER_EXTERNAL_URL", ""
 ).startswith("https://")
@@ -2216,8 +2214,6 @@ def reminder_worker():
 # =========================================================
 
 if __name__ == "__main__":
-
-    create_tables()
 
     reminder_thread = threading.Thread(
         target=reminder_worker,
