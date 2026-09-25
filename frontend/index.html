@@ -479,6 +479,105 @@
         .copilot-status { margin-top:10px; font-size:12px; color:#647681; min-height:18px; }
         @media(max-width:600px){ .copilot-input-row{flex-direction:column;} .copilot-message{max-width:95%;} }
 
+
+        /* ================= BACKGROUND GALLERY ================= */
+
+        .background-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(15, 30, 40, 0.48);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .background-overlay.show {
+            display: flex;
+        }
+
+        .background-panel {
+            width: min(900px, 96vw);
+            max-height: 88vh;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+        }
+
+        .background-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .background-panel-header h3 {
+            color: #29485c;
+            font-size: 21px;
+        }
+
+        .close-background-btn {
+            border: none;
+            background: #f0d7d7;
+            color: #853636;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .background-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 15px;
+        }
+
+        .background-option {
+            border: 2px solid transparent;
+            border-radius: 15px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 5px 16px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .background-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+        }
+
+        .background-option.selected {
+            border-color: #52798b;
+        }
+
+        .background-option img {
+            display: block;
+            width: 100%;
+            height: 115px;
+            object-fit: cover;
+        }
+
+        .background-option-name {
+            padding: 10px 12px;
+            color: #29485c;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .background-note {
+            margin-top: 16px;
+            color: #71818c;
+            font-size: 12px;
+            text-align: center;
+        }
+
         /* ================= MOBILE ================= */
 
         @media(max-width: 800px) {
@@ -521,6 +620,21 @@
 </head>
 
 <body>
+
+<div id="backgroundOverlay" class="background-overlay" onclick="closeBackgroundGallery(event)">
+    <div class="background-panel" onclick="event.stopPropagation()">
+        <div class="background-panel-header">
+            <h3>🎨 Choose Your Background</h3>
+            <button class="close-background-btn" onclick="closeBackgroundGallery()">✕</button>
+        </div>
+
+        <div id="backgroundGrid" class="background-grid"></div>
+
+        <p class="background-note">
+            Choose any background. Your choice is saved automatically in this browser.
+        </p>
+    </div>
+</div>
 
 <div class="app">
 
@@ -599,6 +713,13 @@
             onclick="showPage('history', this)"
         >
             🕒 History
+        </button>
+
+        <button
+            class="nav-btn"
+            onclick="openBackgroundGallery()"
+        >
+            🎨 Backgrounds
         </button>
 
         <button
@@ -2629,6 +2750,112 @@ ${data.low}`;
         };
     }
 
+
+    /* =====================================================
+       BACKGROUND GALLERY
+       Added separately so existing task/AI code is untouched.
+    ===================================================== */
+
+    const backgroundOptions = [
+        {
+            name: "Mountain Escape",
+            image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=85"
+        },
+        {
+            name: "Ocean Calm",
+            image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85"
+        },
+        {
+            name: "Forest Focus",
+            image: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=2000&q=85"
+        },
+        {
+            name: "Night Sky",
+            image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=2000&q=85"
+        },
+        {
+            name: "Minimal Desk",
+            image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=2000&q=85"
+        },
+        {
+            name: "Soft Clouds",
+            image: "https://images.unsplash.com/photo-1499346030926-9a72daac6c63?auto=format&fit=crop&w=2000&q=85"
+        },
+        {
+            name: "Green Nature",
+            image: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=2000&q=85"
+        }
+    ];
+
+    function applyBackground(index) {
+        const option = backgroundOptions[index];
+        if (!option) return;
+
+        document.body.style.backgroundImage =
+            `linear-gradient(
+                rgba(226, 238, 244, 0.55),
+                rgba(244, 239, 232, 0.60)
+            ), url("${option.image}")`;
+
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+        document.body.style.backgroundAttachment = "fixed";
+
+        localStorage.setItem("aiProductivityBackground", String(index));
+    }
+
+    function renderBackgroundGallery() {
+        const grid = document.getElementById("backgroundGrid");
+        if (!grid) return;
+
+        const saved = Number(localStorage.getItem("aiProductivityBackground") || 0);
+
+        grid.innerHTML = backgroundOptions.map((option, index) => `
+            <div
+                class="background-option ${index === saved ? "selected" : ""}"
+                onclick="selectBackground(${index})"
+            >
+                <img src="${option.image}" alt="${option.name}">
+                <div class="background-option-name">
+                    ${option.name}
+                </div>
+            </div>
+        `).join("");
+    }
+
+    function selectBackground(index) {
+        applyBackground(index);
+        renderBackgroundGallery();
+        closeBackgroundGallery();
+    }
+
+    function openBackgroundGallery() {
+        renderBackgroundGallery();
+
+        const overlay = document.getElementById("backgroundOverlay");
+        if (overlay) {
+            overlay.classList.add("show");
+        }
+    }
+
+    function closeBackgroundGallery(event) {
+        if (event && event.target !== event.currentTarget) {
+            return;
+        }
+
+        const overlay = document.getElementById("backgroundOverlay");
+        if (overlay) {
+            overlay.classList.remove("show");
+        }
+    }
+
+    function loadSavedBackground() {
+        const saved = Number(localStorage.getItem("aiProductivityBackground") || 0);
+        applyBackground(
+            saved >= 0 && saved < backgroundOptions.length ? saved : 0
+        );
+    }
+
     /* =====================================================
        COUNTDOWN
     ===================================================== */
@@ -2834,6 +3061,7 @@ ${data.low}`;
     );
 
     updateGreeting();
+    loadSavedBackground();
     checkLogin();
 
 </script>
