@@ -5,11 +5,22 @@ import time
 from datetime import datetime, timedelta
 
 from flask import Flask, jsonify, request, session
+from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from google import genai
+
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
+
+try:
+    from docx import Document
+except ImportError:
+    Document = None
 
 try:
     from winotify import Notification, audio
@@ -50,6 +61,9 @@ app = Flask(__name__)
 
 app.secret_key = FLASK_SECRET_KEY
 
+# Maximum document upload size: 8 MB
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
+
 CORS(
     app,
     supports_credentials=True,
@@ -73,6 +87,49 @@ IS_PRODUCTION = bool(os.getenv("RENDER")) or os.getenv(
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "None" if IS_PRODUCTION else "Lax"
 app.config["SESSION_COOKIE_SECURE"] = IS_PRODUCTION
+
+
+# =========================================================
+# DOCUMENT ANALYZER
+# =========================================================
+
+ALLOWED_DOCUMENT_EXTENSIONS = {".txt", ".pdf", ".docx"}
+MAX_DOCUMENT_SIZE = 8 * 1024 * 1024
+
+def _extract_document_text(file_storage):
+    filename = secure_filename(file_storage.filename or "")
+    extension = os.path.splitext(filename)[1].lower()
+
+    if extension not in ALLOWED_DOCUMENT_EXTENSIONS:
+        raise ValueError("Supported files are TXT, PDF and DOCX.")
+
+    file_storage.stream.seek(0, os.SEEK_END)
+    size = file_storage.stream.tell()
+    file_storage.stream.seek(0)
+    if size > MAX_DOCUMENT_SIZE:
+        raise ValueError("Document is too large. Maximum size is 8 MB.")
+
+    if extension == ".txt":
+        text = file_storage.stream.read().decode("utf-8", errors="replace")
+
+    elif extension == ".pdf":
+        if PdfReader is None:
+            raise RuntimeError("PDF support is not installed. Add pypdf to requirements.txt and redeploy.")
+        reader = PdfReader(file_storage.stream)
+        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+
+    else:
+        if Document is None:
+            raise RuntimeError("DOCX support is not installed. Add python-docx to requirements.txt and redeploy.")
+        document = Document(file_storage.stream)
+        text = "\n".join(p.text for p in document.paragraphs)
+
+    text = text.strip()
+    if not text:
+        raise ValueError("No readable text was found in the document.")
+
+    # Keep the prompt bounded while preserving the beginning of the document.
+    return filename, text[:50000]
 
 
 # =========================================================
@@ -130,6 +187,22 @@ def create_tables():
             deadline TEXT,
             priority TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (user_id)
+            REFERENCES users(id)
+            ON DELETE CASCADE
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            file_type TEXT NOT NULL,
+            content TEXT NOT NULL,
+            analysis TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
             FOREIGN KEY (user_id)
             REFERENCES users(id)
@@ -1299,6 +1372,571 @@ def daily_plan():
         "plan": tasks
     })
 
+
+
+# =========================================================
+# DOCUMENT ANALYZER API + KNOWLEDGE VAULT
+# =========================================================
+
+@app.route("/document-analyze", methods=["POST"])
+def document_analyze():
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    if not gemini_client:
+        return jsonify({
+            "success": False,
+            "message": "Gemini AI is not connected."
+        }), 503
+
+    uploaded_file = request.files.get("document")
+
+    if not uploaded_file or not uploaded_file.filename:
+        return jsonify({
+            "success": False,
+            "message": "Please select a TXT, PDF or DOCX file."
+        }), 400
+
+    mode = str(
+        request.form.get("mode", "summary")
+    ).strip().lower()
+
+    mode_instructions = {
+        "summary":
+            "Give a clear summary with 5-10 key points.",
+        "study":
+            "Turn the document into study notes with important concepts, definitions and revision points.",
+        "questions":
+            "Create 8 useful exam or discussion questions with concise answers based only on the document.",
+        "explain":
+            "Explain the document in simple language for a college student."
+    }
+
+    instruction = mode_instructions.get(
+        mode,
+        mode_instructions["summary"]
+    )
+
+    try:
+
+        filename, document_text = _extract_document_text(
+            uploaded_file
+        )
+
+        prompt = f"""
+You are a document analysis assistant.
+
+Analyze ONLY the supplied document text.
+
+Task:
+{instruction}
+
+Document filename:
+{filename}
+
+DOCUMENT TEXT:
+{document_text}
+
+Rules:
+1. Do not invent facts that are not supported by the document.
+2. Keep the answer organized with headings and bullets.
+3. If the text is incomplete or unclear, say so.
+4. Do not claim to have seen images, tables or pages whose text was not extracted.
+"""
+
+        models = [
+            "gemini-3.8-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.5-flash"
+        ]
+
+        last_error = None
+
+        for model_name in models:
+
+            for attempt in range(2):
+
+                try:
+
+                    response = gemini_client.models.generate_content(
+                        model=model_name,
+                        contents=prompt
+                    )
+
+                    analysis = (
+                        response.text or ""
+                    ).strip()
+
+                    if not analysis:
+                        raise RuntimeError(
+                            "Gemini returned an empty response."
+                        )
+
+                    connection = get_connection()
+                    cursor = connection.cursor()
+
+                    cursor.execute("""
+                        INSERT INTO documents
+                        (
+                            user_id,
+                            filename,
+                            file_type,
+                            content,
+                            analysis
+                        )
+                        VALUES (?, ?, ?, ?, ?)
+                    """, (
+                        user_id,
+                        filename,
+                        os.path.splitext(filename)[1].lower(),
+                        document_text,
+                        analysis
+                    ))
+
+                    document_id = cursor.lastrowid
+
+                    connection.commit()
+                    connection.close()
+
+                    return jsonify({
+                        "success": True,
+                        "document_id": document_id,
+                        "filename": filename,
+                        "file_type":
+                            os.path.splitext(
+                                filename
+                            )[1].lower(),
+                        "mode": mode,
+                        "analysis": analysis,
+                        "reply": analysis
+                    })
+
+                except Exception as error:
+
+                    last_error = error
+
+                    error_text = str(error)
+
+                    print(
+                        f"Document analyzer error with "
+                        f"{model_name} "
+                        f"(attempt {attempt + 1}/2): "
+                        f"{error_text}"
+                    )
+
+                    if (
+                        (
+                            "503" in error_text
+                            or "UNAVAILABLE" in error_text
+                        )
+                        and attempt == 0
+                    ):
+
+                        time.sleep(2)
+                        continue
+
+                    break
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Document analysis is temporarily unavailable. "
+                "Please try again.",
+            "error":
+                str(last_error)
+                if last_error
+                else "Unknown Gemini error"
+        }), 503
+
+    except ValueError as error:
+
+        return jsonify({
+            "success": False,
+            "message": str(error)
+        }), 400
+
+    except Exception as error:
+
+        print(
+            "Document analyzer error:",
+            error
+        )
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Could not analyze this document.",
+            "error": str(error)
+        }), 500
+
+
+# =========================================================
+# KNOWLEDGE VAULT - LIST DOCUMENTS
+# =========================================================
+
+@app.route("/knowledge-vault", methods=["GET"])
+def knowledge_vault():
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            filename,
+            file_type,
+            analysis,
+            created_at
+        FROM documents
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    """, (user_id,))
+
+    documents = [
+        dict(row)
+        for row in cursor.fetchall()
+    ]
+
+    connection.close()
+
+    return jsonify({
+        "success": True,
+        "documents": documents
+    })
+
+
+# =========================================================
+# KNOWLEDGE VAULT - GET ONE DOCUMENT
+# =========================================================
+
+@app.route(
+    "/knowledge-vault/<int:document_id>",
+    methods=["GET"]
+)
+def get_vault_document(document_id):
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            filename,
+            file_type,
+            content,
+            analysis,
+            created_at
+        FROM documents
+        WHERE id = ?
+        AND user_id = ?
+    """, (
+        document_id,
+        user_id
+    ))
+
+    document = cursor.fetchone()
+
+    connection.close()
+
+    if not document:
+        return jsonify({
+            "success": False,
+            "message": "Document not found."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "document": dict(document)
+    })
+
+
+# =========================================================
+# KNOWLEDGE VAULT - DELETE DOCUMENT
+# =========================================================
+
+@app.route(
+    "/knowledge-vault/<int:document_id>",
+    methods=["DELETE"]
+)
+def delete_vault_document(document_id):
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        DELETE FROM documents
+        WHERE id = ?
+        AND user_id = ?
+    """, (
+        document_id,
+        user_id
+    ))
+
+    deleted_count = cursor.rowcount
+
+    connection.commit()
+    connection.close()
+
+    if deleted_count == 0:
+        return jsonify({
+            "success": False,
+            "message": "Document not found."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "message": "Document removed from Knowledge Vault."
+    })
+
+
+# =========================================================
+# KNOWLEDGE VAULT - ASK A QUESTION
+# =========================================================
+
+@app.route(
+    "/knowledge-vault/ask",
+    methods=["POST"]
+)
+def ask_knowledge_vault():
+
+    user_id = get_logged_in_user()
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "Please login first."
+        }), 401
+
+    if not gemini_client:
+        return jsonify({
+            "success": False,
+            "message": "Gemini AI is not connected."
+        }), 503
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    question = str(
+        data.get("question", "")
+    ).strip()
+
+    document_id = data.get(
+        "document_id"
+    )
+
+    if not question:
+        return jsonify({
+            "success": False,
+            "message": "Please enter a question."
+        }), 400
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    if document_id:
+
+        try:
+            document_id = int(document_id)
+        except (TypeError, ValueError):
+
+            connection.close()
+
+            return jsonify({
+                "success": False,
+                "message": "Invalid document ID."
+            }), 400
+
+        cursor.execute("""
+            SELECT
+                id,
+                filename,
+                content
+            FROM documents
+            WHERE id = ?
+            AND user_id = ?
+        """, (
+            document_id,
+            user_id
+        ))
+
+        documents = cursor.fetchall()
+
+    else:
+
+        cursor.execute("""
+            SELECT
+                id,
+                filename,
+                content
+            FROM documents
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (user_id,))
+
+        documents = cursor.fetchall()
+
+    connection.close()
+
+    if not documents:
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Your Knowledge Vault is empty. "
+                "Upload a document first."
+        }), 404
+
+    context_parts = []
+
+    total_chars = 0
+    max_context_chars = 30000
+
+    for document in documents:
+
+        remaining = (
+            max_context_chars
+            - total_chars
+        )
+
+        if remaining <= 0:
+            break
+
+        content = document["content"][:remaining]
+
+        context_parts.append(
+            f"\n--- DOCUMENT: "
+            f"{document['filename']} ---\n"
+            f"{content}\n"
+        )
+
+        total_chars += len(content)
+
+    knowledge_context = "".join(
+        context_parts
+    )
+
+    prompt = f"""
+You are the Knowledge Vault assistant.
+
+Answer the user's question using ONLY
+the document content supplied below.
+
+USER QUESTION:
+{question}
+
+DOCUMENT KNOWLEDGE:
+{knowledge_context}
+
+Rules:
+1. Use only the supplied documents.
+2. Do not invent facts.
+3. If the answer is not present, clearly say:
+   "I could not find that information in your Knowledge Vault."
+4. Mention the relevant document filename when useful.
+5. Keep the answer clear and concise.
+"""
+
+    models = [
+        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash"
+    ]
+
+    last_error = None
+
+    for model_name in models:
+
+        for attempt in range(2):
+
+            try:
+
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+
+                answer = (
+                    response.text or ""
+                ).strip()
+
+                if not answer:
+                    raise RuntimeError(
+                        "Gemini returned an empty response."
+                    )
+
+                return jsonify({
+                    "success": True,
+                    "answer": answer
+                })
+
+            except Exception as error:
+
+                last_error = error
+
+                error_text = str(error)
+
+                print(
+                    f"Knowledge Vault error with "
+                    f"{model_name} "
+                    f"(attempt {attempt + 1}/2): "
+                    f"{error_text}"
+                )
+
+                if (
+                    (
+                        "503" in error_text
+                        or "UNAVAILABLE" in error_text
+                    )
+                    and attempt == 0
+                ):
+
+                    time.sleep(2)
+                    continue
+
+                break
+
+    return jsonify({
+        "success": False,
+        "message":
+            "Knowledge Vault is temporarily unavailable. "
+            "Please try again.",
+        "error":
+            str(last_error)
+            if last_error
+            else "Unknown Gemini error"
+    }), 503
 
 
 # =========================================================
