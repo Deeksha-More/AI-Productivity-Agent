@@ -1413,31 +1413,69 @@ Rules:
 9. If information is missing, say what is missing and still provide useful guidance.
 """
 
-    try:
-        response = gemini_client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt
-        )
+    # Gemini can temporarily return 503 when a model is overloaded.
+    # Retry briefly, then fall back to another current Flash model.
+    # This keeps a temporary Gemini capacity issue from becoming a generic
+    # Copilot 500 error.
+    copilot_models = [
+        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash"
+    ]
 
-        reply = (response.text or "").strip()
+    last_error = None
 
-        if not reply:
-            reply = "I could not generate a response. Please try again."
+    for model_name in copilot_models:
+        for attempt in range(2):
+            try:
+                print(
+                    f"🤖 Copilot request using {model_name} "
+                    f"(attempt {attempt + 1}/2)"
+                )
 
-        return jsonify({
-            "success": True,
-            "reply": reply,
-            "tool": tool
-        })
+                response = gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
 
-    except Exception as error:
-        print("Gemini Copilot error:", error)
+                reply = (response.text or "").strip()
 
-        return jsonify({
-            "success": False,
-            "message": "Copilot could not respond right now.",
-            "error": str(error)
-        }), 500
+                if not reply:
+                    raise RuntimeError("Gemini returned an empty response.")
+
+                return jsonify({
+                    "success": True,
+                    "reply": reply,
+                    "tool": tool
+                })
+
+            except Exception as error:
+                last_error = error
+                error_text = str(error)
+                print(
+                    f"Gemini Copilot error with {model_name} "
+                    f"(attempt {attempt + 1}/2): {error_text}"
+                )
+
+                # Retry only temporary capacity/service failures.
+                if "503" in error_text or "UNAVAILABLE" in error_text:
+                    if attempt == 0:
+                        time.sleep(2)
+                        continue
+
+                # For non-503 errors, move directly to the next model.
+                break
+
+    print("❌ All Copilot Gemini models failed:", last_error)
+
+    return jsonify({
+        "success": False,
+        "message": (
+            "Copilot is temporarily unavailable. "
+            "Please try again in a moment."
+        ),
+        "error": str(last_error) if last_error else "Unknown Gemini error"
+    }), 503
 
 
 # =========================================================
