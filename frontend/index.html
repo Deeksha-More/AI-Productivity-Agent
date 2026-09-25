@@ -451,6 +451,34 @@
             color: #415966;
         }
 
+
+        /* ================= AI COPILOT ================= */
+        .copilot-hero {
+            background: linear-gradient(135deg, rgba(225,237,243,0.94), rgba(246,240,231,0.94));
+            border-radius: 20px; padding: 28px; margin-bottom: 22px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08); text-align: center;
+        }
+        .copilot-hero h2 { font-size: 30px; color:#29485c; margin-bottom:8px; }
+        .copilot-hero p { color:#647681; margin-bottom:18px; }
+        .copilot-tools { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; }
+        .copilot-tool { border:1px solid #d5e1e6; background:rgba(255,255,255,0.9); border-radius:15px; padding:18px; text-align:left; cursor:pointer; transition:.2s; }
+        .copilot-tool:hover { transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,.08); border-color:#9bb9c7; }
+        .copilot-tool .icon { font-size:28px; margin-bottom:9px; }
+        .copilot-tool h3 { font-size:15px; color:#29485c; margin-bottom:5px; }
+        .copilot-tool p { font-size:12px; color:#71818c; line-height:1.45; }
+        .copilot-chat { background:rgba(255,255,255,.92); border-radius:18px; padding:20px; box-shadow:0 8px 25px rgba(0,0,0,.08); }
+        .copilot-chat-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:15px; }
+        .copilot-chat-header h3 { color:#29485c; }
+        .copilot-mode { font-size:12px; background:#e8f1f4; color:#385563; padding:7px 10px; border-radius:999px; }
+        .copilot-messages { min-height:220px; max-height:380px; overflow-y:auto; background:#f7fafb; border:1px solid #dce6ea; border-radius:13px; padding:15px; margin-bottom:14px; }
+        .copilot-message { max-width:82%; padding:11px 13px; border-radius:12px; margin-bottom:10px; line-height:1.5; font-size:14px; white-space:pre-wrap; }
+        .copilot-message.ai { background:#e4eff3; color:#29485c; }
+        .copilot-message.user { background:#52798b; color:white; margin-left:auto; }
+        .copilot-input-row { display:flex; gap:8px; }
+        .copilot-input-row textarea { min-height:55px; flex:1; }
+        .copilot-status { margin-top:10px; font-size:12px; color:#647681; min-height:18px; }
+        @media(max-width:600px){ .copilot-input-row{flex-direction:column;} .copilot-message{max-width:95%;} }
+
         /* ================= MOBILE ================= */
 
         @media(max-width: 800px) {
@@ -488,26 +516,6 @@
                 width: 100%;
             }
         }
-
-
-        /* ================= BACKGROUND GALLERY ================= */
-        .background-btn{width:100%;border:none;background:#e9f0f3;color:#29485c;padding:12px 15px;margin:4px 0;border-radius:10px;text-align:left;font-size:14px;transition:.2s}
-        .background-btn:hover{background:#dcebf1}
-        .background-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,30,40,.55);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:20px}
-        .background-overlay.show{display:flex}
-        .background-panel{width:min(850px,100%);max-height:90vh;overflow-y:auto;background:rgba(255,255,255,.96);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-        .background-panel-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:20px}
-        .background-panel-header h3{color:#29485c;font-size:22px}
-        .close-background-btn{border:none;background:#f0d7d7;color:#853636;width:36px;height:36px;border-radius:50%;font-size:18px}
-        .background-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-        .background-option{border:3px solid transparent;border-radius:14px;overflow:hidden;background:#eef3f5;padding:0;position:relative;transition:.2s;min-height:145px}
-        .background-option:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.15)}
-        .background-option.selected{border-color:#52798b}
-        .background-option img{width:100%;height:145px;display:block;object-fit:cover}
-        .background-label{position:absolute;left:8px;bottom:8px;padding:5px 9px;border-radius:8px;background:rgba(0,0,0,.55);color:white;font-size:12px}
-        .background-note{margin-top:16px;color:#647681;font-size:13px;line-height:1.5}
-        @media(max-width:700px){.background-grid{grid-template-columns:repeat(2,1fr)}}
-        @media(max-width:420px){.background-grid{grid-template-columns:1fr}}
 
     </style>
 </head>
@@ -557,6 +565,14 @@
             📋 My Tasks
         </button>
 
+
+        <button
+            class="nav-btn"
+            onclick="showPage('copilot', this)"
+        >
+            🤖 AI Life & Study Copilot
+        </button>
+
         <button
             class="nav-btn"
             onclick="showPage('dailyPlan', this)"
@@ -586,13 +602,6 @@
         </button>
 
         <button
-            class="background-btn"
-            onclick="openBackgroundGallery()"
-        >
-            🎨 Backgrounds
-        </button>
-
-        <button
             class="nav-btn logout-btn"
             onclick="logout()"
         >
@@ -602,6 +611,49 @@
     </aside>
 
     <main class="main">
+
+
+        <!-- AI LIFE & STUDY COPILOT -->
+        <section id="copilot" class="page">
+            <div class="page-title">
+                <h2>🤖 AI Life & Study Copilot</h2>
+                <p>Your personal AI space for study, projects, ideas and everyday work.</p>
+            </div>
+
+            <div class="copilot-hero">
+                <h2>🤖 What can I help you with?</h2>
+                <p>Choose a tool or start a conversation. We are adding the AI features step by step.</p>
+                <button class="primary-btn" onclick="startCopilotVoice()">🎤 Talk to AI</button>
+            </div>
+
+            <div class="copilot-tools">
+                <div class="copilot-tool" onclick="selectCopilotTool('Study Buddy')"><div class="icon">📚</div><h3>Study Buddy</h3><p>Understand topics, revise concepts and prepare for exams.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Writing Assistant')"><div class="icon">📝</div><h3>Writing Assistant</h3><p>Improve assignments, emails, reports and written work.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Presentation Coach')"><div class="icon">🎤</div><h3>Presentation Coach</h3><p>Practice speaking, structure slides and prepare your delivery.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Coding Buddy')"><div class="icon">💻</div><h3>Coding Buddy</h3><p>Get help understanding code, errors and programming concepts.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Document Analyzer')"><div class="icon">📄</div><h3>Document Analyzer</h3><p>Analyze notes, PDFs and project documents in a later phase.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Research Assistant')"><div class="icon">🔍</div><h3>Research Assistant</h3><p>Organize research questions, sources and project information.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Idea Generator')"><div class="icon">💡</div><h3>Idea Generator</h3><p>Generate project, presentation and innovation ideas.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Knowledge Vault')"><div class="icon">🧠</div><h3>Knowledge Vault</h3><p>Build a personal knowledge space from your own material.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Problem Solver')"><div class="icon">🧩</div><h3>Problem Solver</h3><p>Break difficult problems into clear, manageable steps.</p></div>
+            </div>
+
+            <br>
+            <div class="copilot-chat">
+                <div class="copilot-chat-header">
+                    <h3>💬 Copilot Chat</h3>
+                    <span id="copilotMode" class="copilot-mode">General Copilot</span>
+                </div>
+                <div id="copilotMessages" class="copilot-messages">
+                    <div class="copilot-message ai">Hi! I’m your AI Life & Study Copilot. Choose a tool above or tell me what you need help with.</div>
+                </div>
+                <div class="copilot-input-row">
+                    <textarea id="copilotInput" placeholder="Ask your Copilot something..."></textarea>
+                    <button class="primary-btn" onclick="sendCopilotMessage()">➤ Send</button>
+                </div>
+                <div id="copilotStatus" class="copilot-status"></div>
+            </div>
+        </section>
 
         <!-- DASHBOARD -->
 
@@ -673,16 +725,6 @@
                 >
                     Loading...
                 </div>
-
-            </div>
-
-            <div class="content-card" id="dashboardDeadlineCard">
-
-                <h3>⏰ Upcoming Deadline</h3>
-                <div id="dashboardDeadline" class="next-task">Loading deadline...</div>
-                <br>
-                <button class="secondary-btn" onclick="enableDeadlineNotifications()">🔔 Enable Deadline Notifications</button>
-                <p id="notificationStatus" style="margin-top:10px;font-size:13px;color:#647681;">Enable notifications to receive browser alerts while this dashboard is open.</p>
 
             </div>
 
@@ -1011,20 +1053,6 @@
 
 </div>
 
-<!-- BACKGROUND GALLERY -->
-<div id="backgroundOverlay" class="background-overlay" onclick="closeBackgroundGallery(event)">
-    <div class="background-panel" onclick="event.stopPropagation()">
-        <div class="background-panel-header">
-            <h3>🎨 Choose Your Background</h3>
-            <button class="close-background-btn" onclick="closeBackgroundGallery()">✕</button>
-        </div>
-        <div id="backgroundGrid" class="background-grid"></div>
-        <p class="background-note">
-            Choose any of the 7 backgrounds. Your selection is saved automatically in this browser and stays after refresh.
-        </p>
-    </div>
-</div>
-
 <script>
 
     /* =====================================================
@@ -1041,67 +1069,6 @@
 
     let allTasks = [];
 
-
-    /* =====================================================
-       BACKGROUND GALLERY
-    ===================================================== */
-
-    const backgroundOptions = [
-        {name:"Mountain Escape",url:"https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=85"},
-        {name:"Ocean Calm",url:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85"},
-        {name:"Forest Focus",url:"https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=2000&q=85"},
-        {name:"Night Sky",url:"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2000&q=85"},
-        {name:"Minimal Desk",url:"https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&w=2000&q=85"},
-        {name:"Soft Clouds",url:"https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=2000&q=85"},
-        {name:"Green Nature",url:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=85"}
-    ];
-
-    function applyBackground(index){
-        const bg=backgroundOptions[index];
-        if(!bg)return;
-        document.body.style.backgroundImage=`linear-gradient(rgba(226,238,244,.55),rgba(244,239,232,.60)),url("${bg.url}")`;
-        document.body.style.backgroundSize="cover";
-        document.body.style.backgroundPosition="center";
-        document.body.style.backgroundAttachment="fixed";
-        localStorage.setItem("selectedBackground",String(index));
-        document.querySelectorAll(".background-option").forEach((el,i)=>el.classList.toggle("selected",i===index));
-    }
-
-    function renderBackgroundGallery(){
-        const grid=document.getElementById("backgroundGrid");
-        if(!grid)return;
-        grid.innerHTML=backgroundOptions.map((bg,i)=>`
-            <button type="button" class="background-option" onclick="selectBackground(${i})" aria-label="Select ${bg.name} background">
-                <img src="${bg.url}" alt="${bg.name}" loading="lazy">
-                <span class="background-label">${i+1}. ${bg.name}</span>
-            </button>
-        `).join("");
-        const saved=parseInt(localStorage.getItem("selectedBackground")||"0",10);
-        applyBackground(Number.isInteger(saved)&&saved>=0&&saved<backgroundOptions.length?saved:0);
-    }
-
-    function selectBackground(index){
-        applyBackground(index);
-    }
-
-    function openBackgroundGallery(){
-        const overlay=document.getElementById("backgroundOverlay");
-        if(!overlay)return;
-        renderBackgroundGallery();
-        overlay.classList.add("show");
-    }
-
-    function closeBackgroundGallery(event){
-        if(event&&event.target!==event.currentTarget)return;
-        const overlay=document.getElementById("backgroundOverlay");
-        if(overlay)overlay.classList.remove("show");
-    }
-
-    function loadSavedBackground(){
-        const saved=parseInt(localStorage.getItem("selectedBackground")||"0",10);
-        const index=Number.isInteger(saved)&&saved>=0&&saved<backgroundOptions.length?saved:0;
-        applyBackground(index);
-    }
 
     /* =====================================================
        API FETCH
@@ -1946,7 +1913,6 @@
                 pending;
 
             showNextTask();
-            updateDashboardDeadline();
 
         } catch (error) {
 
@@ -2541,99 +2507,127 @@ ${data.low}`;
        VOICE INPUT
     ===================================================== */
 
-    
-async function startVoiceInput() {
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
+    function startVoiceInput() {
 
-    if (!SpeechRecognition) {
-        alert("Voice input is not supported in this browser.");
-        return;
-    }
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
 
-    const recognition = new SpeechRecognition();
+        if (!SpeechRecognition) {
 
-    recognition.lang = "en-IN";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+            alert(
+                "Voice input is not supported in this browser."
+            );
 
-    const message = document.getElementById("addTaskMessage");
-
-    message.textContent = "🎤 Listening... Speak your task.";
-
-    recognition.onresult = async function (event) {
-        const transcript =
-            event.results[0][0].transcript.trim();
-
-        if (!transcript) {
-            message.textContent = "❌ No speech detected.";
             return;
         }
 
-        message.textContent =
-            "🤖 Gemini is understanding your task...";
+        const recognition =
+            new SpeechRecognition();
 
-        try {
-            const response = await apiFetch("/voice-to-task", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    text: transcript
-                })
-            });
+        recognition.lang =
+            "en-IN";
 
-            if (!response) return;
+        recognition.interimResults =
+            false;
 
-            const data = await response.json();
+        recognition.maxAlternatives =
+            1;
 
-            if (!data.success) {
-                message.textContent =
-                    "❌ " + (data.message || "Unable to process voice task.");
-                return;
-            }
-            document.getElementById("taskInput").value =
-                data.task || transcript;
-
-            document.getElementById("deadlineInput").value =
-                data.deadline || "";
-
-            document.getElementById("priorityInput").value =
-                (data.priority || "MEDIUM").toUpperCase();
-
-            message.textContent =
-                "✅ Task understood by AI! Review the details and click Save Task.";
-
-        } catch (error) {
-            console.error("Voice-to-task error:", error);
-
-            message.textContent =
-                "❌ Unable to process voice task. Please try again.";
-        }
-    };
-
-    recognition.onerror = function (event) {
-        console.error("Speech recognition error:", event.error);
-
-        message.textContent =
-            "❌ Voice recognition failed. Please try again.";
-    };
-
-    recognition.onend = function () {
-        console.log("Voice recognition ended.");
-    };
-
-    try {
         recognition.start();
-    } catch (error) {
-        console.error(error);
-        message.textContent =
-            "❌ Could not start microphone. Please try again.";
-    }
-}
 
+        recognition.onresult =
+            function(event) {
+
+                const transcript =
+                    event
+                        .results[0][0]
+                        .transcript;
+
+                document.getElementById(
+                    "taskInput"
+                ).value =
+                    transcript;
+            };
+
+        recognition.onerror =
+            function(event) {
+
+                console.error(
+                    "Voice error:",
+                    event.error
+                );
+            };
+    }
+
+
+
+    /* =====================================================
+       AI LIFE & STUDY COPILOT - UI FOUNDATION
+       This section is intentionally separate from existing task code.
+    ===================================================== */
+
+    let selectedCopilotTool = "General Copilot";
+
+    function addCopilotMessage(text, type) {
+        const box = document.getElementById("copilotMessages");
+        if (!box) return;
+        const div = document.createElement("div");
+        div.className = "copilot-message " + type;
+        div.textContent = text;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function selectCopilotTool(tool) {
+        selectedCopilotTool = tool;
+        const mode = document.getElementById("copilotMode");
+        const input = document.getElementById("copilotInput");
+        const status = document.getElementById("copilotStatus");
+        if (mode) mode.textContent = tool;
+        if (input) input.placeholder = "Ask " + tool + " something...";
+        if (status) status.textContent = "Selected: " + tool;
+        addCopilotMessage("You selected " + tool + ". Ask your question below.", "ai");
+    }
+
+    async function sendCopilotMessage() {
+        const input = document.getElementById("copilotInput");
+        const status = document.getElementById("copilotStatus");
+        const text = input ? input.value.trim() : "";
+        if (!text) {
+            if (status) status.textContent = "Please enter a message.";
+            return;
+        }
+        addCopilotMessage(text, "user");
+        input.value = "";
+        if (status) status.textContent = "Copilot backend connection will be added next.";
+        addCopilotMessage("I received your message. The Copilot UI is ready. Next we will connect this chat to Gemini without changing your existing task system.", "ai");
+    }
+
+    function startCopilotVoice() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Voice input is not supported in this browser.");
+            return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-IN";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        const status = document.getElementById("copilotStatus");
+        if (status) status.textContent = "🎤 Listening...";
+        recognition.start();
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            const input = document.getElementById("copilotInput");
+            if (input) input.value = transcript;
+            if (status) status.textContent = "Voice captured. Click Send to continue.";
+        };
+        recognition.onerror = function(event) {
+            console.error("Copilot voice error:", event.error);
+            if (status) status.textContent = "Voice error: " + event.error;
+        };
+    }
 
     /* =====================================================
        COUNTDOWN
@@ -2658,151 +2652,95 @@ async function startVoiceInput() {
         }
     }
 
-   function updateCountdowns() {
-    document.querySelectorAll(".countdown").forEach(element => {
-        const deadline = new Date(element.dataset.deadline);
-        const now = new Date();
+    function updateCountdowns() {
 
-        if (isNaN(deadline.getTime())) {
-            element.textContent = "⚠️ Invalid deadline";
-            return;
-        }
+        document
+            .querySelectorAll(
+                ".countdown"
+            )
+            .forEach(element => {
 
-        const difference = deadline.getTime() - now.getTime();
+                const deadline =
+                    new Date(
+                        element
+                            .dataset
+                            .deadline
+                    );
 
-        // Deadline has passed
-        if (difference <= 0) {
-            const overdue = Math.abs(difference);
+                const now =
+                    new Date();
 
-            const days = Math.floor(overdue / 86400000);
-            const hours = Math.floor((overdue % 86400000) / 3600000);
-            const minutes = Math.floor((overdue % 3600000) / 60000);
+                const difference =
+                    deadline -
+                    now;
 
-            // Check whether the deadline's calendar date is before today
-            const deadlineDay = new Date(
-                deadline.getFullYear(),
-                deadline.getMonth(),
-                deadline.getDate()
-            );
+                if (isNaN(deadline.getTime())) {
+                    element.textContent = "⚠️ Invalid deadline";
+                    return;
+                }
 
-            const today = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate()
-            );
+                if (difference <= 0) {
+                    element.textContent =
+                        "⏰ Deadline reached";
 
-            const message = deadlineDay < today
-                ? `⛔ DATE HAS PASSED — overdue by ${days}d ${hours}h ${minutes}m`
-                : `⛔ TIME IS OVER — overdue by ${hours + days * 24}h ${minutes}m`;
+                    sendDeadlineReminder(
+                        element,
+                        "reached",
+                        "A task deadline has been reached. Check your dashboard."
+                    );
 
-            element.textContent = message;
-            element.style.color = "#dc2626";
-            element.style.fontWeight = "bold";
+                    return;
+                }
 
-            if (typeof sendDeadlineReminder === "function") {
-                sendDeadlineReminder(
-                    element,
-                    "overdue",
-                    "A task deadline has passed. Please check your task."
-                );
-            }
+                // Notify once when a task is 15 minutes or less from its deadline.
+                if (difference <= 15 * 60 * 1000) {
+                    sendDeadlineReminder(
+                        element,
+                        "15min",
+                        "A task deadline is approaching within 15 minutes."
+                    );
+                }
 
-            return;
-        }
+                const seconds =
+                    Math.floor(
+                        difference /
+                        1000
+                    );
 
-        // Deadline is still in the future
-        const days = Math.floor(difference / 86400000);
-        const hours = Math.floor((difference % 86400000) / 3600000);
-        const minutes = Math.floor((difference % 3600000) / 60000);
-        const seconds = Math.floor((difference % 60000) / 1000);
+                const days =
+                    Math.floor(
+                        seconds /
+                        86400
+                    );
 
-        element.textContent =
-            `⏳ ${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+                const hours =
+                    Math.floor(
+                        (
+                            seconds %
+                            86400
+                        ) /
+                        3600
+                    );
 
-        element.style.color = "#2563eb";
-        element.style.fontWeight = "bold";
+                const minutes =
+                    Math.floor(
+                        (
+                            seconds %
+                            3600
+                        ) /
+                        60
+                    );
 
-        // Notify once when deadline is within 15 minutes
-        if (difference <= 15 * 60 * 1000 &&
-            typeof sendDeadlineReminder === "function") {
-            sendDeadlineReminder(
-                element,
-                "15min",
-                "A task deadline is approaching within 15 minutes."
-            );
-        }
-    });
-}
+                const sec =
+                    seconds %
+                    60;
 
+                element.textContent =
+                    `⏳ ${days}d ${hours}h ${minutes}m ${sec}s remaining`;
 
-    /* =====================================================
-       DASHBOARD DEADLINE + BROWSER NOTIFICATIONS
-    ===================================================== */
-
-    function enableDeadlineNotifications() {
-        const status = document.getElementById("notificationStatus");
-        if (!("Notification" in window)) {
-            status.textContent = "This browser does not support desktop notifications.";
-            return;
-        }
-        Notification.requestPermission().then(permission => {
-            status.textContent = permission === "granted"
-                ? "✅ Deadline notifications are enabled."
-                : "Notifications are blocked. Allow them in your browser site settings.";
-        });
-    }
-
-    function notifyDashboardDeadline(task, type, message) {
-        if (!("Notification" in window) || Notification.permission !== "granted") return;
-        const key = `deadline-${task.id || task.task}-${task.deadline}-${type}`;
-        try {
-            if (localStorage.getItem(key)) return;
-            localStorage.setItem(key, "sent");
-            new Notification("AI Productivity Agent — Deadline Reminder", {
-                body: `${task.task}: ${message}`
             });
-        } catch (error) {
-            console.warn("Could not store notification state:", error);
-        }
     }
 
-    function updateDashboardDeadline() {
-        const container = document.getElementById("dashboardDeadline");
-        if (!container) return;
-
-        const upcoming = allTasks
-            .filter(task => task.completed !== 1 && task.deadline)
-            .map(task => ({ ...task, deadlineDate: new Date(task.deadline) }))
-            .filter(task => !isNaN(task.deadlineDate.getTime()))
-            .sort((a, b) => a.deadlineDate - b.deadlineDate);
-
-        if (!upcoming.length) {
-            container.textContent = "No upcoming deadlines. Add a deadline to one of your tasks.";
-            return;
-        }
-
-        const task = upcoming[0];
-        const diff = task.deadlineDate.getTime() - Date.now();
-        const taskName = escapeHtml(task.task || "Untitled task");
-
-        if (diff <= 0) {
-            container.innerHTML = `<strong>${taskName}</strong><br>📅 ${formatDate(task.deadline)}<br><br>🔴 Deadline has passed`;
-            notifyDashboardDeadline(task, "reached", "Its deadline has passed. Please review it.");
-            return;
-        }
-
-        if (diff <= 15 * 60 * 1000) {
-            notifyDashboardDeadline(task, "15min", "The deadline is within 15 minutes.");
-        }
-
-        const totalSeconds = Math.floor(diff / 1000);
-        const days = Math.floor(totalSeconds / 86400);
-        const hours = Math.floor((totalSeconds % 86400) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        container.innerHTML = `<strong>${taskName}</strong><br>📅 ${formatDate(task.deadline)}<br><br>⏳ ${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
-    }
 
     /* =====================================================
        DATE FORMAT
@@ -2890,13 +2828,10 @@ async function startVoiceInput() {
        START APPLICATION
     ===================================================== */
 
-    loadSavedBackground();
-
-    setInterval(() => {
-        updateCountdowns();
-        updateDashboardDeadline();
-        updateGreeting();
-    }, 1000);
+    setInterval(
+        updateCountdowns,
+        1000
+    );
 
     updateGreeting();
     checkLogin();
