@@ -578,6 +578,34 @@
             text-align: center;
         }
 
+
+        /* ================= DOCUMENT ANALYZER + KNOWLEDGE VAULT ================= */
+        .copilot-feature-panel {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.94);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border: 1px solid #dce6ea;
+        }
+        .copilot-feature-panel.show { display: block; }
+        .feature-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:15px; }
+        .feature-header h3 { color:#29485c; margin:0; }
+        .feature-note { color:#647681; font-size:13px; line-height:1.5; margin-bottom:15px; }
+        .feature-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .feature-row > * { flex:1; min-width:180px; }
+        .feature-status { margin-top:12px; min-height:20px; font-size:13px; color:#526671; }
+        .feature-result { margin-top:15px; background:#f7fafb; border:1px solid #dce6ea; border-radius:13px; padding:16px; line-height:1.65; white-space:pre-wrap; }
+        .vault-list { display:grid; gap:10px; margin-top:15px; }
+        .vault-item { background:#f7fafb; border:1px solid #dce6ea; border-radius:12px; padding:13px; }
+        .vault-item strong { color:#29485c; }
+        .vault-item small { display:block; color:#71818c; margin-top:4px; }
+        .vault-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .vault-question { margin-top:15px; }
+        .vault-question textarea { min-height:80px; }
+        .file-name { margin-top:8px; font-size:13px; color:#52798b; }
+
         /* ================= MOBILE ================= */
 
         @media(max-width: 800px) {
@@ -752,11 +780,62 @@
                 <div class="copilot-tool" onclick="selectCopilotTool('Writing Assistant')"><div class="icon">📝</div><h3>Writing Assistant</h3><p>Improve assignments, emails, reports and written work.</p></div>
                 <div class="copilot-tool" onclick="selectCopilotTool('Presentation Coach')"><div class="icon">🎤</div><h3>Presentation Coach</h3><p>Practice speaking, structure slides and prepare your delivery.</p></div>
                 <div class="copilot-tool" onclick="selectCopilotTool('Coding Buddy')"><div class="icon">💻</div><h3>Coding Buddy</h3><p>Get help understanding code, errors and programming concepts.</p></div>
-                <div class="copilot-tool" onclick="selectCopilotTool('Document Analyzer')"><div class="icon">📄</div><h3>Document Analyzer</h3><p>Analyze notes, PDFs and project documents in a later phase.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Document Analyzer')"><div class="icon">📄</div><h3>Document Analyzer</h3><p>Upload and analyze PDF, DOCX and TXT study or project documents.</p></div>
                 <div class="copilot-tool" onclick="selectCopilotTool('Research Assistant')"><div class="icon">🔍</div><h3>Research Assistant</h3><p>Organize research questions, sources and project information.</p></div>
                 <div class="copilot-tool" onclick="selectCopilotTool('Idea Generator')"><div class="icon">💡</div><h3>Idea Generator</h3><p>Generate project, presentation and innovation ideas.</p></div>
-                <div class="copilot-tool" onclick="selectCopilotTool('Knowledge Vault')"><div class="icon">🧠</div><h3>Knowledge Vault</h3><p>Build a personal knowledge space from your own material.</p></div>
+                <div class="copilot-tool" onclick="selectCopilotTool('Knowledge Vault')"><div class="icon">🧠</div><h3>Knowledge Vault</h3><p>Store your documents and ask questions about your saved knowledge.</p></div>
                 <div class="copilot-tool" onclick="selectCopilotTool('Problem Solver')"><div class="icon">🧩</div><h3>Problem Solver</h3><p>Break difficult problems into clear, manageable steps.</p></div>
+            </div>
+
+            <!-- DOCUMENT ANALYZER -->
+            <div id="documentAnalyzerPanel" class="copilot-feature-panel">
+                <div class="feature-header">
+                    <h3>📄 Document Analyzer</h3>
+                    <span class="copilot-mode">PDF / DOCX / TXT</span>
+                </div>
+                <p class="feature-note">Upload a document and Gemini will create a summary, study notes, exam questions, or a simple explanation.</p>
+
+                <div class="feature-row">
+                    <input id="documentFile" type="file" accept=".pdf,.docx,.txt">
+                    <select id="documentAnalysisMode">
+                        <option value="summary">📋 Summary</option>
+                        <option value="study">📚 Study Notes</option>
+                        <option value="questions">❓ Exam Questions</option>
+                        <option value="explain">💡 Simple Explanation</option>
+                    </select>
+                    <button class="primary-btn" onclick="analyzeDocument()">🔍 Analyze</button>
+                </div>
+
+                <div id="selectedDocumentName" class="file-name"></div>
+                <div id="documentAnalyzerStatus" class="feature-status"></div>
+                <div id="documentAnalyzerResult" class="feature-result" style="display:none;"></div>
+            </div>
+
+            <!-- KNOWLEDGE VAULT -->
+            <div id="knowledgeVaultPanel" class="copilot-feature-panel">
+                <div class="feature-header">
+                    <h3>🧠 Knowledge Vault</h3>
+                    <button class="secondary-btn" onclick="loadKnowledgeVault()">🔄 Refresh</button>
+                </div>
+                <p class="feature-note">Your analyzed documents are stored privately for your account. Select a document or ask across your saved documents.</p>
+
+                <div class="feature-row">
+                    <select id="vaultDocumentSelect">
+                        <option value="">All saved documents</option>
+                    </select>
+                    <button class="secondary-btn" onclick="loadKnowledgeVault()">📚 Load Documents</button>
+                </div>
+
+                <div id="knowledgeVaultList" class="vault-list"></div>
+
+                <div class="vault-question">
+                    <textarea id="vaultQuestion" placeholder="Ask something about your saved documents..."></textarea>
+                    <br><br>
+                    <button class="primary-btn" onclick="askKnowledgeVault()">🤖 Ask Knowledge Vault</button>
+                </div>
+
+                <div id="vaultStatus" class="feature-status"></div>
+                <div id="vaultAnswer" class="feature-result" style="display:none;"></div>
             </div>
 
             <br>
@@ -2705,9 +2784,20 @@ ${data.low}`;
         const mode = document.getElementById("copilotMode");
         const input = document.getElementById("copilotInput");
         const status = document.getElementById("copilotStatus");
+        const analyzer = document.getElementById("documentAnalyzerPanel");
+        const vault = document.getElementById("knowledgeVaultPanel");
+
         if (mode) mode.textContent = tool;
         if (input) input.placeholder = "Ask " + tool + " something...";
         if (status) status.textContent = "Selected: " + tool;
+
+        if (analyzer) analyzer.classList.toggle("show", tool === "Document Analyzer");
+        if (vault) vault.classList.toggle("show", tool === "Knowledge Vault");
+
+        if (tool === "Knowledge Vault") {
+            loadKnowledgeVault();
+        }
+
         addCopilotMessage("You selected " + tool + ". Ask your question below.", "ai");
     }
 
@@ -2723,15 +2813,12 @@ ${data.low}`;
 
         addCopilotMessage(text, "user");
         input.value = "";
-
         if (status) status.textContent = "🤖 Copilot is thinking...";
 
         try {
             const response = await apiFetch("/copilot-chat", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: text,
                     tool: selectedCopilotTool
@@ -2743,41 +2830,19 @@ ${data.low}`;
             const data = await response.json();
 
             if (!data.success) {
-                addCopilotMessage(
-                    "❌ " + (data.message || "Copilot could not respond."),
-                    "ai"
-                );
+                addCopilotMessage("❌ " + (data.message || "Copilot could not respond."), "ai");
                 if (status) status.textContent = "Something went wrong.";
                 return;
             }
 
             addCopilotMessage(data.reply || "I could not generate a response.", "ai");
-
             if (status) status.textContent = "✅ Ready";
         } catch (error) {
             console.error("Copilot chat error:", error);
-
-            addCopilotMessage(
-                "❌ Unable to connect to the Copilot backend. Please try again.",
-                "ai"
-            );
-
+            addCopilotMessage("❌ Unable to connect to the Copilot backend. Please try again.", "ai");
             if (status) status.textContent = "Backend connection failed.";
         }
     }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const input = document.getElementById("copilotInput");
-
-        if (input) {
-            input.addEventListener("keydown", function (event) {
-                if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    sendCopilotMessage();
-                }
-            });
-        }
-    });
 
     function startCopilotVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2909,6 +2974,210 @@ ${data.low}`;
             saved >= 0 && saved < backgroundOptions.length ? saved : 0
         );
     }
+
+    /* =====================================================
+       DOCUMENT ANALYZER
+    ===================================================== */
+
+    document.addEventListener("change", function(event) {
+        if (event.target && event.target.id === "documentFile") {
+            const file = event.target.files[0];
+            const label = document.getElementById("selectedDocumentName");
+            if (label) label.textContent = file ? "Selected: " + file.name : "";
+        }
+    });
+
+    async function analyzeDocument() {
+        const fileInput = document.getElementById("documentFile");
+        const mode = document.getElementById("documentAnalysisMode");
+        const status = document.getElementById("documentAnalyzerStatus");
+        const result = document.getElementById("documentAnalyzerResult");
+
+        if (!fileInput || !fileInput.files.length) {
+            status.textContent = "⚠️ Please select a PDF, DOCX or TXT file first.";
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const name = file.name.toLowerCase();
+        const allowed = [".pdf", ".docx", ".txt"];
+
+        if (!allowed.some(ext => name.endsWith(ext))) {
+            status.textContent = "❌ Only PDF, DOCX and TXT files are supported.";
+            return;
+        }
+
+        if (file.size > 8 * 1024 * 1024) {
+            status.textContent = "❌ File is too large. Maximum size is 8 MB.";
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("document", file);
+        formData.append("mode", mode.value);
+
+        status.textContent = "🤖 Gemini is analyzing your document...";
+        result.style.display = "none";
+        result.textContent = "";
+
+        try {
+            const response = await apiFetch("/document-analyze", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response) return;
+
+            const data = await response.json();
+
+            if (!data.success) {
+                status.textContent = "❌ " + (data.message || "Document analysis failed.");
+                return;
+            }
+
+            status.textContent = "✅ Document analyzed and saved to Knowledge Vault.";
+            result.style.display = "block";
+            result.textContent = data.analysis || data.reply || "No analysis returned.";
+
+            await loadKnowledgeVault();
+        } catch (error) {
+            console.error("Document Analyzer error:", error);
+            status.textContent = "❌ Unable to analyze the document. Please try again.";
+        }
+    }
+
+
+    /* =====================================================
+       KNOWLEDGE VAULT
+    ===================================================== */
+
+    async function loadKnowledgeVault() {
+        const list = document.getElementById("knowledgeVaultList");
+        const select = document.getElementById("vaultDocumentSelect");
+        const status = document.getElementById("vaultStatus");
+
+        if (!list || !select) return;
+
+        list.innerHTML = "Loading saved documents...";
+
+        try {
+            const response = await apiFetch("/knowledge-vault");
+            if (!response) return;
+
+            const data = await response.json();
+
+            if (!data.success) {
+                list.innerHTML = "❌ " + (data.message || "Unable to load Knowledge Vault.");
+                return;
+            }
+
+            const documents = data.documents || [];
+
+            select.innerHTML = '<option value="">All saved documents</option>';
+
+            documents.forEach(doc => {
+                const option = document.createElement("option");
+                option.value = doc.id;
+                option.textContent = doc.filename;
+                select.appendChild(option);
+            });
+
+            if (!documents.length) {
+                list.innerHTML = "<p>No documents saved yet. Use Document Analyzer to upload one.</p>";
+                return;
+            }
+
+            list.innerHTML = documents.map(doc => `
+                <div class="vault-item">
+                    <strong>📄 ${escapeHtml(doc.filename)}</strong>
+                    <small>${escapeHtml(doc.file_type || "document")} • ${formatDate(doc.created_at)}</small>
+                    <div class="vault-actions">
+                        <button class="secondary-btn" onclick="selectVaultDocument(${doc.id})">Ask about this</button>
+                        <button class="danger-btn" onclick="deleteVaultDocument(${doc.id})">Delete</button>
+                    </div>
+                </div>
+            `).join("");
+
+            if (status) status.textContent = documents.length + " document(s) saved.";
+        } catch (error) {
+            console.error("Knowledge Vault load error:", error);
+            list.innerHTML = "❌ Unable to load Knowledge Vault.";
+        }
+    }
+
+    function selectVaultDocument(id) {
+        const select = document.getElementById("vaultDocumentSelect");
+        if (select) select.value = String(id);
+        const question = document.getElementById("vaultQuestion");
+        if (question) question.focus();
+    }
+
+    async function askKnowledgeVault() {
+        const question = document.getElementById("vaultQuestion").value.trim();
+        const documentId = document.getElementById("vaultDocumentSelect").value;
+        const status = document.getElementById("vaultStatus");
+        const answer = document.getElementById("vaultAnswer");
+
+        if (!question) {
+            status.textContent = "⚠️ Please enter a question.";
+            return;
+        }
+
+        status.textContent = "🤖 Searching your Knowledge Vault...";
+        answer.style.display = "none";
+
+        try {
+            const response = await apiFetch("/knowledge-vault/ask", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    question: question,
+                    document_id: documentId || null
+                })
+            });
+
+            if (!response) return;
+
+            const data = await response.json();
+
+            if (!data.success) {
+                status.textContent = "❌ " + (data.message || "Knowledge Vault could not answer.");
+                return;
+            }
+
+            status.textContent = "✅ Answer generated from your saved material.";
+            answer.style.display = "block";
+            answer.textContent = data.answer || data.reply || "No answer returned.";
+        } catch (error) {
+            console.error("Knowledge Vault error:", error);
+            status.textContent = "❌ Unable to connect to Knowledge Vault.";
+        }
+    }
+
+    async function deleteVaultDocument(id) {
+        if (!confirm("Delete this document from your Knowledge Vault?")) return;
+
+        try {
+            const response = await apiFetch(`/knowledge-vault/${id}`, {
+                method: "DELETE"
+            });
+
+            if (!response) return;
+
+            const data = await response.json();
+
+            if (!data.success) {
+                alert(data.message || "Unable to delete document.");
+                return;
+            }
+
+            await loadKnowledgeVault();
+        } catch (error) {
+            console.error("Knowledge Vault delete error:", error);
+            alert("Unable to delete document.");
+        }
+    }
+
 
     /* =====================================================
        COUNTDOWN
